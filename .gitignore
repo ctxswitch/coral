@@ -27,3 +27,6 @@ tmp/
 # Test certs
 config/overlays/dev/tls.*
 config/overlays/dev/*-webhooks.yaml
+
+# Editor files
+.idea
