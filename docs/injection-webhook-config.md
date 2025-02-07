@@ -1,9 +1,8 @@
 # Configuring access to the injection webhook
 
-By default, the webhook is "opt-in" and requires a label to be applied to the namespace: `images.stvz.io/inject: "true"`.  This is configurable based on your individual requirements and you can modify the selectors and conditions in the [config/webhook/kustomization.yaml](kustomization configuration) file.
+By default, the webhook is "opt-in" and requires a label to be applied to the namespace: `images.coral.ctx.sh/inject: "true"`.  This is configurable based on your individual requirements and you can modify the selectors and conditions in the [kustomization configuration](../config/coral/webhook/kustomization.yaml) file.
 
-
-Some possiblities could include:
+Some possibilities could include:
 
 ### Using namespace labels to manage access
 
@@ -15,7 +14,7 @@ kind: Namespace
 metadata:
   name: myspace
   labels:
-    - images.stvz.io/inject: "true"
+    - images.coral.ctx.sh/inject: "true"
 ```
 
 You could replace the default selectors with this:
@@ -23,7 +22,7 @@ You could replace the default selectors with this:
 ```yaml
 namespaceSelector:
   matchExpression:
-    - key: images.stvz.io/inject
+    - key: images.ctx.sh/inject
       operator: In
       values:
         - "true"
@@ -31,18 +30,18 @@ namespaceSelector:
 
 This will send all requests for the supported/managed objects in the labeled namespace to the injector.
 
-The opposite, could include including all namespaces except labeled namespaces.  If you have system namespaces that include resources that you do not want to handle with the webhook, label them in much the same way that was previously done eg. (`images.stvz.io/no-inject: "true"`) and add the following match rule:
+The opposite, could include including all namespaces except labeled namespaces.  If you have system namespaces that include resources that you do not want to handle with the webhook, label them in much the same way that was previously done eg. (`images.coral.ctx.sh/no-inject: "true"`) and add the following match rule:
 
 ```yaml
 namespaceSelector:
   matchExpression:
-    - key: images.stvz.io/no-inject
+    - key: images.coral.ctx.sh/no-inject
       operator: NotIn
       values:
         - "true"
 ```
 
-Alternatively if you want to limit coral webhook access to you production and staging namespaces (given that the labels exist), while keeping development environments more flexible you can replace the default conditions with the following:
+Alternatively if you want to limit coral webhook access to your production and staging namespaces (given that the labels exist), while keeping development environments more flexible you can replace the default conditions with the following:
 
 ```yaml
 namespaceSelector
@@ -59,5 +58,5 @@ In later versions of Kubernetes (1.28+) a new matching field was introduced call
 ```yaml
 matchConditions:
   - name: exclude-namespaces
-    expression: '!(object.metadata.namespace in ["kube-*", "*-system", "coral", "cert-manager"])'
+    expression: '!(object.metadata.namespace in ["kube-*", "*-system", "cert-manager"])'
 ```
