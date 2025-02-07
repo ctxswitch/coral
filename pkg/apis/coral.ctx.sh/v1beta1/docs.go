@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // +k8s:deepcopy-gen=package,register
-// go:generate controller-gen crd:trivialVersions=true paths=. output:dir=.
+//go:generate controller-gen crd:trivialVersions=true paths=. output:dir=.
 
 // +groupName=coral.ctx.sh
 // +versionName=v1beta1
