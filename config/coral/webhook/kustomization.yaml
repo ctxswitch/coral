@@ -8,22 +8,6 @@ commonAnnotations:
   cert-manager.io/inject-ca-from: coral/coral-webhook-cert
 patches:
   - target:
-      kind: MutatingWebhookConfiguration
-      name: mutating-webhook-configuration
-    patch: |-
-      apiVersion: admissionregistration.k8s.io/v1
-      kind: MutatingWebhookConfiguration
-      metadata:
-        name: mutating-webhook-configuration
-      webhooks:
-        - name: minjector.image.coral.ctx.sh
-          namespaceSelector:
-            matchExpressions:
-              - key: image.coral.ctx.sh/inject
-                operator: In
-                values: ["true"]
-  # TODO: Merge all but the metadata name target to the inline patch
-  - target:
       kind: ValidatingWebhookConfiguration
       name: validating-webhook-configuration
     patch: |-
@@ -35,6 +19,12 @@ patches:
         value: coral-webhook-service
       - op: replace
         path: /webhooks/0/clientConfig/service/namespace
+        value: coral-system
+      - op: replace
+        path: /webhooks/1/clientConfig/service/name
+        value: coral-webhook-service
+      - op: replace
+        path: /webhooks/1/clientConfig/service/namespace
         value: coral-system
   - target:
       kind: MutatingWebhookConfiguration

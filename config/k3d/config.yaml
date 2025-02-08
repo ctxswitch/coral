@@ -1,0 +1,19 @@
+apiVersion: k3d.io/v1alpha4
+kind: Simple 
+metadata:
+  name: coral
+servers: 1
+agents: 3
+image: rancher/k3s:v1.28.12-k3s1
+ports:
+  - port: 9000:30100
+    nodeFilters:
+      - agent:*
+options:
+  k3d:
+    disableLoadbalancer: false
+    disableImageVolume: false
+    disableRollback: false
+  kubeconfig:
+    updateDefaultKubeconfig: true
+    switchCurrentContext: true
