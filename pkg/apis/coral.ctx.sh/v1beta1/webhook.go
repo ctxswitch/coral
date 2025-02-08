@@ -26,6 +26,8 @@ import (
 
 // +kubebuilder:webhook:verbs=create;update,path=/mutate-ctx-sh-v1-image,mutating=true,failurePolicy=fail,groups=coral.ctx.sh,resources=images,versions=v1beta1,name=mimage.coral.ctx.sh,admissionReviewVersions=v1beta1,sideEffects=none
 // +kubebuilder:webhook:verbs=create;update,path=/validate-ctx-sh-v1-image,mutating=false,failurePolicy=fail,groups=coral.ctx.sh,resources=images,versions=v1beta1,name=vimage.coral.ctx.sh,admissionReviewVersions=v1beta1,sideEffects=none
+// +kubebuilder:webhook:verbs=create;update,path=/mutate-ctx-sh-v1-mirror,mutating=true,failurePolicy=fail,groups=coral.ctx.sh,resources=mirrors,versions=v1beta1,name=mmirror.coral.ctx.sh,admissionReviewVersions=v1beta1,sideEffects=none
+// +kubebuilder:webhook:verbs=create;update,path=/validate-ctx-sh-v1-mirror,mutating=false,failurePolicy=fail,groups=coral.ctx.sh,resources=mirrors,versions=v1beta1,name=vmirror.coral.ctx.sh,admissionReviewVersions=v1beta1,sideEffects=none
 
 // SetupWebhookWithManager adds webhook for BuildSet.
 func (i *Image) SetupWebhookWithManager(mgr ctrl.Manager) error {

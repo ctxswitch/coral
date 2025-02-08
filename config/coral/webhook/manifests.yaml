@@ -24,6 +24,26 @@ webhooks:
     resources:
     - images
   sideEffects: None
+- admissionReviewVersions:
+  - v1beta1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-ctx-sh-v1-mirror
+  failurePolicy: Fail
+  name: mmirror.coral.ctx.sh
+  rules:
+  - apiGroups:
+    - coral.ctx.sh
+    apiVersions:
+    - v1beta1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - mirrors
+  sideEffects: None
 ---
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
@@ -49,4 +69,24 @@ webhooks:
     - UPDATE
     resources:
     - images
+  sideEffects: None
+- admissionReviewVersions:
+  - v1beta1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-ctx-sh-v1-mirror
+  failurePolicy: Fail
+  name: vmirror.coral.ctx.sh
+  rules:
+  - apiGroups:
+    - coral.ctx.sh
+    apiVersions:
+    - v1beta1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - mirrors
   sideEffects: None

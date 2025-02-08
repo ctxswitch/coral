@@ -1,4 +1,5 @@
 ENV ?= "dev"
+LOCALDEV_CLUSTER ?= coral
 
 export PATH := ./bin:$(PATH)
 
@@ -168,9 +169,20 @@ localdev-cluster:
 
 .PHONY: localdev-shared
 localdev-shared:
-	@$(KUSTOMIZE) build config/coral/cert-manager | envsubst | $(KUBECTL) apply -f -
+	@$(KUSTOMIZE) build config/cert-manager | envsubst | $(KUBECTL) apply -f -
 	@$(KUBECTL) wait --for=condition=available --timeout=120s deploy -l app.kubernetes.io/group=cert-manager -n cert-manager
+	@$(KUSTOMIZE) build config/localstack | envsubst | $(KUBECTL) apply -f -
+	@$(KUBECTL) wait --for=condition=available --timeout=120s deploy/localstack -n coral-system
+	@$(KUSTOMIZE) build config/registry | envsubst | $(KUBECTL) apply -f -
+	@$(KUBECTL) wait --for=condition=available --timeout=120s deploy/registry -n coral-system
+	@$(KUSTOMIZE) build config/coral/overlays/$(ENV) | envsubst | $(KUBECTL) apply -f -
+	@$(KUBECTL) wait --for=condition=available --timeout=120s deploy/coral -n coral-system
 
+.PHONY: localdev-clean
+localdev-clean:
+#	@$(KUBECTL) delete -k config/registry
+#	@$(KUBECTL) delete -k config/cert-manager
+	@$(KUBECTL) delete -k config/coral/overlays/$(ENV)
 
 .PHONY: controller-run
 controller-run:

@@ -1,0 +1,39 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coral
+  namespace: coral-system
+  labels:
+    app: coral
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: coral
+  template:
+    metadata:
+      labels:
+        app: coral
+    spec:
+      # Add back in when rbac is in
+      # serviceAccountName: coral
+      containers:
+        - name: operator
+          image: docker.io/ctxsh/coral:latest
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            runAsNonRoot: false
+          ports:
+            - containerPort: 9090
+            - containerPort: 9443
+          volumeMounts:
+            - name: tls
+              mountPath: "/etc/webhook/tls"
+              readOnly: true
+      volumes:
+        - name: tls
+          secret:
+            secretName: coral-webhook-cert

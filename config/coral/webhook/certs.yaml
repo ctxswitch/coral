@@ -3,7 +3,7 @@ apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   name: coral-selfsigned-issuer
-  namespace: coral
+  namespace: coral-system
   labels:
     app.kubernetes.io/name: coral
 spec:
@@ -13,7 +13,7 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: coral-webhook-cert
-  namespace: coral
+  namespace: coral-system
   labels:
     app.kubernetes.io/name: coral
 spec:
