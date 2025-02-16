@@ -1,0 +1,7 @@
+apiVersion: coral.ctx.sh/v1beta1
+kind: ImageSync
+metadata:
+  name: examples
+spec:
+  images:
+    - nginx:latest

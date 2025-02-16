@@ -5,7 +5,7 @@ commonAnnotations:
   ctx.sh/authors: "Coral Authors"
   ctx.sh/license: "Apache"
   ctx.sh/support: "https://github.com/ctxswitch/coral/issues"
-  cert-manager.io/inject-ca-from: coral/coral-webhook-cert
+  cert-manager.io/inject-ca-from: coral-system/coral-webhook-cert
 patches:
   - target:
       kind: ValidatingWebhookConfiguration

@@ -10,5 +10,5 @@ patches:
   - path: deployment.yaml
     target:
       kind: Deployment
-      name: coral
+      name: coral-controller
       namespace: coral-system

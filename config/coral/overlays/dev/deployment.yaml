@@ -1,19 +1,11 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: coral
+  name: coral-controller
   namespace: coral-system
-  labels:
-    app: coral
 spec:
   replicas: 1
-  selector:
-    matchLabels:
-      app: coral
   template:
-    metadata:
-      labels:
-        app: coral
     spec:
       containers:
         - name: operator
