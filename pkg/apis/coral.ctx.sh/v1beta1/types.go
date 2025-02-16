@@ -95,7 +95,7 @@ const (
 	ImageStateUnknown   ImageSyncState = "unknown"
 )
 
-// ImageSyncCondition represents the condition of the sync
+// ImageSyncCondition represents the condition of the sync.
 type ImageSyncCondition struct {
 	// +required
 	// Available is the number of images that are currently available on the nodes.

@@ -16,6 +16,8 @@ package imagesync
 
 import (
 	"context"
+	"time"
+
 	coralv1beta1 "ctx.sh/coral/pkg/apis/coral.ctx.sh/v1beta1"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -25,7 +27,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"time"
 )
 
 type Controller struct {

@@ -79,6 +79,9 @@ issues:
     - path: "apis/*"
       linters:
         - gochecknoglobals
+    - path: "metrics.go"
+      linters:
+        - gochecknoglobals
     - path: "webhook.go"
       linters:
         - lll

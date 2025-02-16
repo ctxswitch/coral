@@ -16,6 +16,8 @@ package controller
 
 import (
 	"crypto/tls"
+	"os"
+
 	coralv1beta1 "ctx.sh/coral/pkg/apis/coral.ctx.sh/v1beta1"
 	"ctx.sh/coral/pkg/controller"
 	coralwebhooks "ctx.sh/coral/pkg/webhooks/v1beta1"
@@ -24,7 +26,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -95,12 +96,12 @@ func (c *Controller) RunE(cmd *cobra.Command, args []string) error {
 		os.Exit(1)
 	}
 
-	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+	if err = mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		log.Error(err, "unable to set up health check")
 		os.Exit(1)
 	}
 
-	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+	if err = mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 		log.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}
