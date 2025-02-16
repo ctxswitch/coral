@@ -17,20 +17,24 @@ package v1beta1
 // +kubebuilder:docs-gen:collapse=Apache License
 
 import (
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // +kubebuilder:docs-gen:collapse=Go imports
 
-func defaultedImage(obj *Image) {}
+func defaultedImageSyncSpec(obj *ImageSyncSpec) {}
+
+func defaultedImageSync(obj *ImageSync) {
+	defaultedImageSyncSpec(&obj.Spec)
+}
 
 func defaultedMirror(obj *Mirror) {}
 
 // Defaulted sets the resource defaults.
-func Defaulted(obj client.Object) {
+func Defaulted(obj runtime.Object) {
 	switch obj := obj.(type) { //nolint:gocritic
-	case *Image:
-		defaultedImage(obj)
+	case *ImageSync:
+		defaultedImageSync(obj)
 	case *Mirror:
 		defaultedMirror(obj)
 	}

@@ -1,8 +1,14 @@
 # Coral
 
 Coral is the start of a set of services for kubernetes that provides a structural framework for running applications.  The first iteration provides image and artifact management tools which lets users:
-1. Prefetch external container images to kubernetes nodes or to internal local registries.  It allows the user to selectively target groups of nodes for images to be fetched on, and tracks image availability on the nodes.  This allows the service to provide a mutating admissions webhook which can optionally modify the node selectors in resource specifications to ensure applications are only started on nodes that have the image available.  The webhook can also optionally modify the pull policies for containers to ensure that containers do not pull external containers and only rely on the configured container images that are already present in the cluster.
-2. Introduces versioned artifact synchronization to nodes.  I initially used this in a (private) flink operator implementation where large jar archives were mounted into the pods by an admissions webhook which set up the volumes and mounts.  This allowed application container to remain small at the expense of additional storage on the nodes.
+1. Prefetch external container images to kubernetes nodes. 
+    * Allows the user to selectively target groups of nodes for images to be fetched on.
+    * Tracks image availability on the nodes.
+    * Provide a mutating webhook which can optionally inject the node selectors in resource specifications to ensure applications are only started on nodes that have the image available.  The webhook can also optionally modify the pull policies for containers to ensure that containers do not pull external containers and only rely on the configured container images that are already present in the cluster.
+    * I subsequent releases the fetch agents will be able to fetch the images from other nodes based on a peer-to-peer model.
+2. Prefetch external container images to local registries.
+   * Provide a mutating webhook which can optionally update the image source to point to the local registry.
+3. Introduces versioned artifact synchronization to nodes.  I initially used this in a (private) flink operator implementation where large jar archives were mounted into the pods by an admissions webhook which set up the volumes and mounts.  This allowed application container to remain small at the expense of additional storage on the nodes.
 
 Over time, we expect to add additional features to Coral including:
 - [ ] Fully managed internal registries.
@@ -35,19 +41,19 @@ The default injection policy is to not modify any resources.  However, the webho
 Coral can ensure that the pull policy for all containers in the resource are set to `never` thereby restricting resources to images already present on the nodes.  To have coral override pull policies for a resource, add the following annotation:
 
 ```
-image.coral.stvz.io/inject: pull-policy
+imagesync.coral.stvz.io/inject: pull-policy
 ```
 
 You can exclude containers from the injection policies by using the following annotation with a comma seperated list of container names:
 
 ```
-image.coral.stvz.io/exclude: [container-name],...
+imagesync.coral.stvz.io/exclude: [container-name],...
 ```
 
 The alternative to exclude is the include annotation which will only include containers listed for policy injection:
 
 ```
-image.coral.stvz.io/include: [container-name],...
+imagesync.coral.stvz.io/include: [container-name],...
 ```
 
 If both the `include` and `exclude` annotations are present, `exclude` will be ignored.
@@ -57,19 +63,19 @@ If both the `include` and `exclude` annotations are present, `exclude` will be i
 Node selection can be used to ensure that pods are started up on nodes that already have the image fetched.  Coral fetch workers will label the nodes once a managed image is present on the node allowing us to gate scheduling on that node to ensure there are no disruptions and to minimize startup latency.  To enable the injection of node selectors into your resources, enable the following:
 
 ```
-image.coral.stvz.io/inject: selectors
+imagesync.coral.stvz.io/inject: selectors
 ```
 
 By default, all container images are included as part of the selector. As with the policy injection, containers can be included and excluded from:
 
 ```
-image.coral.stvz.io/include: [container-name],...
+imagesync.coral.stvz.io/include: [container-name],...
 ```
 
 and 
 
 ```
-image.coral.stvz.io/exclude: [container-name],...
+imagesync.coral.stvz.io/exclude: [container-name],...
 ```
 
 #### Multiple injectors
@@ -77,7 +83,7 @@ image.coral.stvz.io/exclude: [container-name],...
 Multiple injection rules can be specified by including a comma seperated list for the annotation value:
 
 ```
-image.coral.stvz.io/inject: pull-policy,selectors
+imagesync.coral.stvz.io/inject: pull-policy,selectors
 ```
 
 #### Resources that are supported for injection

@@ -4,13 +4,13 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.16.1
-  name: images.coral.ctx.sh
+  name: imagesyncs.coral.ctx.sh
 spec:
   group: coral.ctx.sh
   names:
-    kind: Image
-    listKind: ImageList
-    plural: images
+    kind: ImageSync
+    listKind: ImageSyncList
+    plural: imagesyncs
     shortNames:
     - img
     singular: images
@@ -54,6 +54,21 @@ spec:
             type: object
           spec:
             properties:
+              imagePullSecrets:
+                items:
+                  properties:
+                    name:
+                      default: ""
+                      type: string
+                  type: object
+                  x-kubernetes-map-type: atomic
+                nullable: true
+                type: array
+              images:
+                items:
+                  type: string
+                type: array
+                x-kubernetes-list-type: atomic
               selector:
                 items:
                   properties:
@@ -72,6 +87,8 @@ spec:
                   type: object
                 nullable: true
                 type: array
+            required:
+            - images
             type: object
           status:
             properties:
@@ -88,18 +105,6 @@ spec:
                 - pending
                 - unknown
                 type: object
-              data:
-                items:
-                  properties:
-                    label:
-                      type: string
-                    name:
-                      type: string
-                  required:
-                  - label
-                  - name
-                  type: object
-                type: array
               totalImages:
                 type: integer
               totalNodes:

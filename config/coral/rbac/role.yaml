@@ -1,0 +1,26 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: coral-system-role
+rules:
+- apiGroups:
+  - coral.ctx.sh
+  resources:
+  - imagesyncs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - coral.ctx.sh
+  resources:
+  - imagesyncs/status
+  verbs:
+  - get
+  - patch
+  - update

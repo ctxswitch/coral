@@ -17,6 +17,7 @@ package v1beta1
 // +kubebuilder:docs-gen:collapse=Apache License
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/selection"
 )
@@ -24,8 +25,8 @@ import (
 // +kubebuilder:docs-gen:collapse=Go imports
 
 const (
-	ImageFinalizer  = "image.coral.ctx.sh/finalizer"
-	MirrorFinalizer = "mirror.coral.ctx.sh/finalizer"
+	ImageSyncFinalizer = "imagesync.coral.ctx.sh/finalizer"
+	MirrorFinalizer    = "mirror.coral.ctx.sh/finalizer"
 )
 
 type NodeSelector struct {
@@ -40,8 +41,12 @@ const (
 	ListSelectorAll ListSelector = "all"
 )
 
-// ImageSpec is the spec for a Image resource.
-type ImageSpec struct {
+// ImageSyncSpec is the spec for a Image resource.
+type ImageSyncSpec struct {
+	// +required
+	// +listType=atomic
+	// Images to fetch.
+	Images []string `json:"images"`
 	// +optional
 	// +nullable
 	// Selector defines which nodes the image should be synced to.
@@ -49,7 +54,7 @@ type ImageSpec struct {
 	// +optional
 	// +nullable
 	// ImagePullSecrets is a list of secrets to use when pulling the image.
-	// ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets"`
+	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets"`
 }
 
 // +genclient
@@ -65,41 +70,33 @@ type ImageSpec struct {
 // +kubebuilder:printcolumn:name="Nodes",type="integer",JSONPath=".status.totalNodes",description="The number of nodes matching the selector (if any)",priority=1
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 
-// Image is an external image that will be mirrored to each configured node.
-type Image struct {
+// ImageSync is an external image that will be mirrored to each configured node.
+type ImageSync struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              ImageSpec `json:"spec"`
+	Spec              ImageSyncSpec `json:"spec"`
 	// +optional
-	Status ImageStatus `json:"status"`
+	Status ImageSyncStatus `json:"status"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-type ImageList struct {
+type ImageSyncList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Image `json:"items"`
+	Items           []ImageSync `json:"items"`
 }
 
-type ImageState string
+type ImageSyncState string
 
 const (
-	ImageStatePending   ImageState = "pending"
-	ImageStateAvailable ImageState = "available"
-	ImageStateUnknown   ImageState = "unknown"
+	ImageStatePending   ImageSyncState = "pending"
+	ImageStateAvailable ImageSyncState = "available"
+	ImageStateUnknown   ImageSyncState = "unknown"
 )
 
-type ImageData struct {
-	// +required
-	// Name is the name of the image in NAME:TAG format.
-	Name string `json:"name"`
-	// +required
-	// Label is the label that is used to track the image on the node.
-	Label string `json:"label"`
-}
-
-type ImageCondition struct {
+// ImageSyncCondition represents the condition of the sync.
+type ImageSyncCondition struct {
 	// +required
 	// Available is the number of images that are currently available on the nodes.
 	Available int `json:"available"`
@@ -111,8 +108,8 @@ type ImageCondition struct {
 	Unknown int `json:"unknown"`
 }
 
-// ImageStatus is the status for a WatchSet resource.
-type ImageStatus struct {
+// ImageSyncStatus is the status for a WatchSet resource.
+type ImageSyncStatus struct {
 	// +optional
 	// TotalNodes is the number of nodes that should have the image prefetched.
 	TotalNodes int `json:"totalNodes"`
@@ -121,10 +118,10 @@ type ImageStatus struct {
 	TotalImages int `json:"totalImages"`
 	// +optional
 	// Condition is the current state of the images on the nodes.
-	Condition ImageCondition `json:"condition"`
+	Condition ImageSyncCondition `json:"condition"`
 	// +optional
 	// Data is a list of image data that will be used to track the images on the nodes.
-	Data []ImageData `json:"data"`
+	// Data []ImageSyncData `json:"data"`
 }
 
 type MirrorSpec struct {

@@ -64,9 +64,9 @@ generate: codegen manifests
 ### Build, install, run, and clean
 ###
 .PHONY: install
-install: $(KUSTOMIZE) generate
+install: $(KUSTOMIZE) deps generate
 	@$(KUSTOMIZE) build config/coral/crd | kubectl apply -f -
-	@$(KUSTOMIZE) build config/overlays/$(ENV) | kubectl apply -f -
+	@$(KUSTOMIZE) build config/coral/overlays/$(ENV) | kubectl apply -f -
 
 .PHONY: uninstall
 uninstall:
@@ -98,7 +98,7 @@ vet:
 
 .PHONY: license
 license: $(ADDLICENSE)
-	@find . -name '*.go' | xargs $(ADDLICENSE) -c "Coral Authors" -y 2024 -l apache
+	@find . -name '*.go' | xargs $(ADDLICENSE) -c "Coral Authors" -y 2025 -l apache
 
 ###
 ### Builds
@@ -176,7 +176,7 @@ localdev-shared:
 	@$(KUSTOMIZE) build config/registry | envsubst | $(KUBECTL) apply -f -
 	@$(KUBECTL) wait --for=condition=available --timeout=120s deploy/registry -n coral-system
 	@$(KUSTOMIZE) build config/coral/overlays/$(ENV) | envsubst | $(KUBECTL) apply -f -
-	@$(KUBECTL) wait --for=condition=available --timeout=120s deploy/coral -n coral-system
+	@$(KUBECTL) wait --for=condition=available --timeout=120s deploy/coral-controller -n coral-system
 
 .PHONY: localdev-clean
 localdev-clean:
@@ -186,30 +186,34 @@ localdev-clean:
 
 .PHONY: controller-run
 controller-run:
-	$(eval POD := $(shell kubectl get pods -n coral -l app=coral -o=custom-columns=:metadata.name --no-headers))
-	@$(KUBECTL) exec -n coral -it pod/$(POD) -- bash -c "go run main.go controller --log-level=8 --skip-insecure-verify"
+	$(eval POD := $(shell kubectl get pods -n coral-system -l app=controller -o=custom-columns=:metadata.name --no-headers))
+	@$(KUBECTL) exec -n coral-system -it pod/$(POD) -- bash -c "go run pkg/cmd/coral/*.go controller --log-level=6 --skip-insecure-verify=true"
 
-.PHONY: mirror-run
-mirror-run:
-	$(eval POD := $(shell kubectl get pods -n coral -l app=coral,component=mirror -o=custom-columns=:metadata.name --no-headers))
-	$(KUBECTL) exec -n coral -it pod/$(POD) -- bash -c "go run main.go mirror --log-level=8 --name=$(POD) --namespace=coral --labels=app=coral,component=mirror"
+controller-exec:
+	$(eval POD := $(shell kubectl get pods -n coral-system -l app=controller -o=custom-columns=:metadata.name --no-headers))
+	@$(KUBECTL) exec -n coral-system -it pod/$(POD) -- bash
 
-.PHONY: agent-run
-agent-run:
-	@$(KUBECTL) apply -k config/overlays/$(ENV)
-
-.PHONY: agent-restart
-agent-restart:
-	@$(KUBECTL) rollout restart daemonset coral-agent -n coral
-	@$(KUBECTL) rollout status daemonset coral-agent -n coral --timeout=120s
-
-.PHONY: agent-stop
-agent-stop:
-	@$(KUBECTL) delete ds/coral-agent -n coral
-
-.PHONY: agent-logs
-agent-logs:
-	@$(KUBECTL) logs -n coral -l app=coral-agent -c agent -f --ignore-errors
+#.PHONY: mirror-run
+#mirror-run:
+#	$(eval POD := $(shell kubectl get pods -n coral -l app=coral,component=mirror -o=custom-columns=:metadata.name --no-headers))
+#	$(KUBECTL) exec -n coral -it pod/$(POD) -- bash -c "go run main.go mirror --log-level=8 --name=$(POD) --namespace=coral --labels=app=coral,component=mirror"
+#
+#.PHONY: agent-run
+#agent-run:
+#	@$(KUBECTL) apply -k config/overlays/$(ENV)
+#
+#.PHONY: agent-restart
+#agent-restart:
+#	@$(KUBECTL) rollout restart daemonset coral-agent -n coral
+#	@$(KUBECTL) rollout status daemonset coral-agent -n coral --timeout=120s
+#
+#.PHONY: agent-stop
+#agent-stop:
+#	@$(KUBECTL) delete ds/coral-agent -n coral
+#
+#.PHONY: agent-logs
+#agent-logs:
+#	@$(KUBECTL) logs -n coral -l app=coral-agent -c agent -f --ignore-errors
 
 .PHONY: exec
 exec:

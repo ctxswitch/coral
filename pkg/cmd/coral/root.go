@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package main
 
 import (
 	"ctx.sh/coral/pkg/build"
+	"ctx.sh/coral/pkg/cmd/coral/controller"
 	"github.com/spf13/cobra"
 )
 
@@ -27,6 +28,10 @@ provides components for watching source repositories for changes and building co
 when changes and conditions are detected.  It also provides a tool for syncrhonizing the
 new images to nodes in a cluster based off of node labels bypassing the need for external
 registries.`
+	ControllerUsage     = "controller [ARG...]"
+	ControllerShortDesc = "Start the build controller"
+	ControllerLongDesc  = `Starts the build controller providing management of the
+kubernetes resources and services.`
 )
 
 type Root struct{}
@@ -54,5 +59,24 @@ func (r *Root) Command() *cobra.Command {
 		},
 	}
 
+	rootCmd.AddCommand(ControllerCommand())
 	return rootCmd
+}
+
+func ControllerCommand() *cobra.Command {
+	c := controller.Controller{}
+
+	cmd := &cobra.Command{
+		Use:   ControllerUsage,
+		Short: ControllerShortDesc,
+		Long:  ControllerLongDesc,
+		RunE:  c.RunE,
+	}
+
+	cmd.PersistentFlags().StringVarP(&c.Certs, "certs", "c", DefaultCertDir, "specify the webhooks certs directory")
+	cmd.PersistentFlags().BoolVarP(&c.LeaderElection, "enable-leader-election", "", DefaultEnableLeaderElection, "enable leader election")
+	cmd.PersistentFlags().BoolVarP(&c.SkipInsecureVerify, "skip-insecure-verify", "", DefaultSkipInsecureVerify, "skip certificate verification for the webhooks")
+	cmd.PersistentFlags().Int8VarP(&c.LogLevel, "log-level", "", DefaultLogLevel, "set the log level (integer value)")
+	cmd.PersistentFlags().StringVarP(&c.Namespace, "namespace", "n", DefaultNamespace, "limit the coral scope to a specific namespace")
+	return cmd
 }

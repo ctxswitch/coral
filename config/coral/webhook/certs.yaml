@@ -18,8 +18,8 @@ metadata:
     app.kubernetes.io/name: coral
 spec:
   dnsNames:
-    - coral-webhook-service.coral.svc
-    - coral-webhook-service.coral.svc.cluster.local
+    - coral-webhook-service.coral-system.svc
+    - coral-webhook-service.coral-system.svc.cluster.local
   issuerRef:
     kind: Issuer
     name: coral-selfsigned-issuer

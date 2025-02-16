@@ -2,22 +2,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: coral
+  name: coral-controller
   namespace: coral-system
   labels:
-    app: coral
+    group: coral
+    app: controller
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: coral
+      group: coral
+      app: controller
   template:
     metadata:
       labels:
-        app: coral
+        group: coral
+        app: controller
     spec:
-      # Add back in when rbac is in
-      # serviceAccountName: coral
+      serviceAccountName: coral-system
       containers:
         - name: operator
           image: docker.io/ctxsh/coral:latest

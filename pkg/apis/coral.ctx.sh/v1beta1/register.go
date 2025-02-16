@@ -52,8 +52,8 @@ var (
 // addKnownTypes adds a list of known types to the scheme.
 func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
-		&Image{},
-		&ImageList{},
+		&ImageSync{},
+		&ImageSyncList{},
 		&Mirror{},
 		&MirrorList{},
 	)
