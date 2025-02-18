@@ -12,3 +12,8 @@ patches:
       kind: Deployment
       name: coral-controller
       namespace: coral-system
+  - path: agent.yaml
+    target:
+      kind: DaemonSet
+      name: coral-agent
+      namespace: coral-system

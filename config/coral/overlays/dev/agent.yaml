@@ -1,10 +1,9 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: DaemonSet
 metadata:
-  name: coral-controller
+  name: coral-agent
   namespace: coral-system
 spec:
-  replicas: 1
   template:
     spec:
       nodeSelector:
@@ -13,20 +12,10 @@ spec:
         - name: operator
           image: docker.io/golang:latest
           imagePullPolicy: IfNotPresent
-          workingDir: /usr/src/app
           command:
             - sleep
             - infinity
-          securityContext:
-            runAsUser: 0
-            runAsGroup: 0
-            runAsNonRoot: false
-            capabilities:
-              add: ["SETFCAP"]
-          ports:
-            - containerPort: 9443
-              name: webhook
-              protocol: TCP
+          workingDir: /usr/src/app
           volumeMounts:
             - name: app
               mountPath: /usr/src/app

@@ -10,3 +10,4 @@ resources:
   - ../crd
   - ../webhook
   - controller.yaml
+  - agent.yaml

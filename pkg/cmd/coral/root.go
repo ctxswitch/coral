@@ -16,6 +16,7 @@ package main
 
 import (
 	"ctx.sh/coral/pkg/build"
+	"ctx.sh/coral/pkg/cmd/coral/agent"
 	"ctx.sh/coral/pkg/cmd/coral/controller"
 	"github.com/spf13/cobra"
 )
@@ -29,9 +30,12 @@ when changes and conditions are detected.  It also provides a tool for syncrhoni
 new images to nodes in a cluster based off of node labels bypassing the need for external
 registries.`
 	ControllerUsage     = "controller [ARG...]"
-	ControllerShortDesc = "Start the build controller"
-	ControllerLongDesc  = `Starts the build controller providing management of the
+	ControllerShortDesc = "Start the coral controller"
+	ControllerLongDesc  = `Starts the coral controller providing management of the
 kubernetes resources and services.`
+	AgentUsage     = "agent [ARG...]"
+	AgentShortDesc = "Start the coral agent"
+	AgentLongDesc  = `Starts the coral agent which ensures the the node contains the configured resources.`
 )
 
 type Root struct{}
@@ -60,6 +64,7 @@ func (r *Root) Command() *cobra.Command {
 	}
 
 	rootCmd.AddCommand(ControllerCommand())
+	rootCmd.AddCommand(AgentCommand())
 	return rootCmd
 }
 
@@ -78,5 +83,21 @@ func ControllerCommand() *cobra.Command {
 	cmd.PersistentFlags().BoolVarP(&c.SkipInsecureVerify, "skip-insecure-verify", "", DefaultSkipInsecureVerify, "skip certificate verification for the webhooks")
 	cmd.PersistentFlags().Int8VarP(&c.LogLevel, "log-level", "", DefaultLogLevel, "set the log level (integer value)")
 	cmd.PersistentFlags().StringVarP(&c.Namespace, "namespace", "n", DefaultNamespace, "limit the coral scope to a specific namespace")
+	return cmd
+}
+
+func AgentCommand() *cobra.Command {
+	a := agent.Agent{}
+	cmd := &cobra.Command{
+		Use:   AgentUsage,
+		Short: AgentShortDesc,
+		Long:  AgentLongDesc,
+		RunE:  a.RunE,
+	}
+
+	cmd.PersistentFlags().Int8VarP(&a.LogLevel, "log-level", "v", DefaultLogLevel, "set the log level (integer value)")
+	cmd.PersistentFlags().StringVarP(&a.ContainerdAddr, "containerd-addr", "A", DefaultContainerdAddr, "set the containerd address")
+	cmd.PersistentFlags().IntVarP(&a.Workers, "workers", "w", DefaultParallel, "set the number of agent workers")
+
 	return cmd
 }

@@ -1,23 +1,22 @@
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: DaemonSet
 metadata:
-  name: coral-controller
+  name: coral-agent
   namespace: coral-system
   labels:
     group: coral
-    app: controller
+    app: agent
 spec:
-  replicas: 1
   selector:
     matchLabels:
       group: coral
-      app: controller
+      app: agent
   template:
     metadata:
       labels:
         group: coral
-        app: controller
+        app: agent
     spec:
       serviceAccountName: coral-system
       containers:
@@ -26,19 +25,24 @@ spec:
           imagePullPolicy: IfNotPresent
           command:
             - /coral
-            - controller
+            - agent
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
           securityContext:
             runAsUser: 0
             runAsGroup: 0
             runAsNonRoot: false
+            capabilities:
+              add: [ "SETFCAP" ]
           ports:
             - containerPort: 9090
-            - containerPort: 9443
           volumeMounts:
-            - name: tls
-              mountPath: "/etc/webhook/tls"
-              readOnly: true
+            - name: varrun
+              mountPath: "/kubelet"
       volumes:
-        - name: tls
-          secret:
-            secretName: coral-webhook-cert
+        - name: varrun
+          hostPath:
+            path: /var/run
