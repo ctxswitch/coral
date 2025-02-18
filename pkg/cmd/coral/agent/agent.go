@@ -1,7 +1,9 @@
 package agent
 
 import (
-	"context"
+	"os"
+	"time"
+
 	"ctx.sh/coral/pkg/agent"
 	coralv1beta1 "ctx.sh/coral/pkg/apis/coral.ctx.sh/v1beta1"
 	"github.com/go-logr/logr"
@@ -15,12 +17,10 @@ import (
 	crun "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/cri-client/pkg/util"
 	"k8s.io/klog/v2"
-	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
-	"time"
 )
 
 const (
@@ -48,7 +48,7 @@ func (a *Agent) RunE(cmd *cobra.Command, args []string) error {
 		os.Exit(1)
 	}
 
-	ims, rts, err := a.connectContainerRuntime(ctx, a.ContainerdAddr)
+	ims, rts, err := a.connectContainerRuntime(a.ContainerdAddr)
 	if err != nil {
 		log.Error(err, "failed to connect to container runtime")
 		os.Exit(1)
@@ -74,21 +74,17 @@ func (a *Agent) RunE(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func (a *Agent) connectContainerRuntime(ctx context.Context, addr string) (crun.ImageServiceClient, crun.RuntimeServiceClient, error) {
+func (a *Agent) connectContainerRuntime(addr string) (crun.ImageServiceClient, crun.RuntimeServiceClient, error) {
 	addr, dialer, err := util.GetAddressAndDialer(addr)
 	if err != nil {
 		klog.ErrorS(err, "Get container runtime address failed")
 		return nil, nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, ConnectionTimeout)
-	defer cancel()
-
-	conn, err := grpc.DialContext(
-		ctx,
+	conn, err := grpc.NewClient(
 		addr,
-		grpc.WithContextDialer(dialer),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithContextDialer(dialer),
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(MaxCallRecvMsgSize)),
 	)
 	if err != nil {

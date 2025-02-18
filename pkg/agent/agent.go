@@ -2,10 +2,11 @@ package agent
 
 import (
 	"context"
+	"sync"
+
 	"github.com/go-logr/logr"
 	crun "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sync"
 )
 
 type Options struct {
