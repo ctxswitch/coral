@@ -3,7 +3,7 @@ kind: Simple
 metadata:
   name: coral
 servers: 1
-agents: 3
+agents: 1
 image: rancher/k3s:v1.28.12-k3s1
 ports:
   - port: 9000:30100

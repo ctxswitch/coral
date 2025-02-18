@@ -189,35 +189,17 @@ controller-run:
 	$(eval POD := $(shell kubectl get pods -n coral-system -l app=controller -o=custom-columns=:metadata.name --no-headers))
 	@$(KUBECTL) exec -n coral-system -it pod/$(POD) -- bash -c "go run pkg/cmd/coral/*.go controller --log-level=6 --skip-insecure-verify=true"
 
+.PHONY: controller-exec
 controller-exec:
 	$(eval POD := $(shell kubectl get pods -n coral-system -l app=controller -o=custom-columns=:metadata.name --no-headers))
 	@$(KUBECTL) exec -n coral-system -it pod/$(POD) -- bash
 
-#.PHONY: mirror-run
-#mirror-run:
-#	$(eval POD := $(shell kubectl get pods -n coral -l app=coral,component=mirror -o=custom-columns=:metadata.name --no-headers))
-#	$(KUBECTL) exec -n coral -it pod/$(POD) -- bash -c "go run main.go mirror --log-level=8 --name=$(POD) --namespace=coral --labels=app=coral,component=mirror"
-#
-#.PHONY: agent-run
-#agent-run:
-#	@$(KUBECTL) apply -k config/overlays/$(ENV)
-#
-#.PHONY: agent-restart
-#agent-restart:
-#	@$(KUBECTL) rollout restart daemonset coral-agent -n coral
-#	@$(KUBECTL) rollout status daemonset coral-agent -n coral --timeout=120s
-#
-#.PHONY: agent-stop
-#agent-stop:
-#	@$(KUBECTL) delete ds/coral-agent -n coral
-#
-#.PHONY: agent-logs
-#agent-logs:
-#	@$(KUBECTL) logs -n coral -l app=coral-agent -c agent -f --ignore-errors
+.PHONY: agent-run
+agent-run:
+	$(eval POD := $(shell kubectl get pods -n coral-system -l app=agent -o=custom-columns=:metadata.name --no-headers))
+	@$(KUBECTL) exec -n coral-system -it pod/$(POD) -- bash -c "go run pkg/cmd/coral/*.go agent --log-level=6"
 
-.PHONY: exec
-exec:
-	$(eval POD := $(shell kubectl get pods -n coral -l app=coral -o=custom-columns=:metadata.name --no-headers))
-	kubectl exec -n coral -it pod/$(POD) -- bash
-
-
+.PHONY: agent-exec
+agent-exec:
+	$(eval POD := $(shell kubectl get pods -n coral-system -l app=agent -o=custom-columns=:metadata.name --no-headers))
+	@$(KUBECTL) exec -n coral-system -it pod/$(POD) -- bash

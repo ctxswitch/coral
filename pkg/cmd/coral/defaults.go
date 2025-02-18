@@ -14,20 +14,13 @@
 
 package main
 
-import "time"
-
 const (
-	DefaultCertDir              string        = "/etc/webhook/tls"
-	DefaultEnableLeaderElection bool          = false
-	DefaultSkipInsecureVerify   bool          = false
-	DefaultLogLevel             int8          = 0
-	DefaultPollInterval         time.Duration = 10 * time.Second
-	DefaultContainerdAddr       string        = "unix:///kubelet/containerd/containerd.sock"
-	DefaultNamespace            string        = ""
-	DefaultScope                string        = ""
-	DefaultLabels               string        = "app=coral,component=mirror"
-	DefaultParallel             int           = 1
-
-	ConnectionTimeout  time.Duration = 30 * time.Second
-	MaxCallRecvMsgSize int           = 1024 * 1024 * 32
+	DefaultCertDir              string = "/etc/webhook/tls"
+	DefaultEnableLeaderElection bool   = false
+	DefaultSkipInsecureVerify   bool   = false
+	DefaultLogLevel             int8   = 4
+	DefaultContainerdAddr       string = "unix:///kubelet/containerd/containerd.sock"
+	DefaultNamespace            string = ""
+	DefaultScope                string = ""
+	DefaultParallel             int    = 1
 )
