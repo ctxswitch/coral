@@ -48,6 +48,7 @@ func (a *Agent) Start(ctx context.Context) error {
 	<-ctx.Done()
 
 	log.Info("stopping agent")
+
 	close(events)
 
 	wg.Wait()
