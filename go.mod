@@ -4,7 +4,7 @@ go 1.23.0
 
 require (
 	github.com/go-logr/logr v1.4.2
-	github.com/prometheus/client_golang v1.21.0
+	github.com/prometheus/client_golang v1.21.1
 	github.com/spf13/cobra v1.9.1
 	go.uber.org/zap v1.27.0
 	google.golang.org/grpc v1.70.0
