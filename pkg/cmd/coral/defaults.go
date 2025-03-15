@@ -22,5 +22,5 @@ const (
 	DefaultContainerdAddr       string = "unix:///kubelet/containerd/containerd.sock"
 	DefaultNamespace            string = ""
 	DefaultScope                string = ""
-	DefaultParallel             int    = 1
+	DefaultWorkers              int    = 10
 )

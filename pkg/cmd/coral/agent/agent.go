@@ -2,6 +2,7 @@ package agent
 
 import (
 	"os"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"time"
 
 	"ctx.sh/coral/pkg/agent"
@@ -35,6 +36,11 @@ type Agent struct {
 }
 
 func (a *Agent) RunE(cmd *cobra.Command, args []string) error {
+	scheme := runtime.NewScheme()
+	_ = coralv1beta1.AddToScheme(scheme)
+	_ = corev1.AddToScheme(scheme)
+	_ = appsv1.AddToScheme(scheme)
+
 	log := zap.New(
 		zap.Level(zapcore.Level(a.LogLevel) * -1),
 	)
@@ -54,16 +60,18 @@ func (a *Agent) RunE(cmd *cobra.Command, args []string) error {
 		os.Exit(1)
 	}
 
-	c, err := a.connectKubeClient()
+	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+		Scheme:         scheme,
+		LeaderElection: false,
+	})
 	if err != nil {
-		log.Error(err, "failed to connect to kube client")
-		os.Exit(1)
+		log.Error(err, "unable to start manager")
 	}
 
-	ag := agent.NewAgent(&agent.Options{
+	ag := agent.SetupWithManager(mgr, &agent.Options{
 		ImageServiceClient:   ims,
 		RuntimeServiceClient: rts,
-		Client:               c,
+		Workers:              a.Workers,
 	})
 
 	if err := ag.Start(ctx); err != nil {

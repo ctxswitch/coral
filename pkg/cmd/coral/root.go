@@ -97,7 +97,7 @@ func AgentCommand() *cobra.Command {
 
 	cmd.PersistentFlags().Int8VarP(&a.LogLevel, "log-level", "v", DefaultLogLevel, "set the log level (integer value)")
 	cmd.PersistentFlags().StringVarP(&a.ContainerdAddr, "containerd-addr", "A", DefaultContainerdAddr, "set the containerd address")
-	cmd.PersistentFlags().IntVarP(&a.Workers, "workers", "w", DefaultParallel, "set the number of agent workers")
+	cmd.PersistentFlags().IntVarP(&a.Workers, "workers", "w", DefaultWorkers, "set the number of agent workers")
 
 	return cmd
 }

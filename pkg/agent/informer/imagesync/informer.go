@@ -2,14 +2,17 @@ package imagesync
 
 import (
 	"context"
-	"ctx.sh/coral/pkg/agent"
+	"ctx.sh/coral/pkg/agent/event"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"os"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sync"
 )
+
+type Options struct {
+	Cache cache.Cache
+}
 
 type Informer struct {
 	stopCh   chan struct{}
@@ -18,13 +21,15 @@ type Informer struct {
 	cache.Cache
 }
 
-func SetupWithManager(mgr ctrl.Manager) *Informer {
+func Setup(options *Options) *Informer {
 	return &Informer{
-		Cache: mgr.GetCache(),
+		stopCh: make(chan struct{}),
+
+		Cache: options.Cache,
 	}
 }
 
-func (i *Informer) Start(ctx context.Context, events chan<- agent.Event) error {
+func (i *Informer) Start(ctx context.Context, events chan<- event.Event) error {
 	logger := log.FromContext(ctx).WithName("informer.imagesync")
 	i.stopCh = make(chan struct{})
 
@@ -37,13 +42,12 @@ func (i *Informer) Start(ctx context.Context, events chan<- agent.Event) error {
 		return err
 	}
 
-	_, err = informer.AddEventHandler(&Handler{})
+	_, err = informer.AddEventHandler(&Handler{
+		logger: logger,
+		events: events,
+	})
 	if err != nil {
 		return err
-	}
-
-	if !i.Cache.WaitForCacheSync(ctx) {
-		return ctx.Err()
 	}
 
 	go func() {
@@ -61,6 +65,10 @@ func (i *Informer) Start(ctx context.Context, events chan<- agent.Event) error {
 		})
 		logger.Info("imagesync informer stopped")
 	}()
+
+	if !i.Cache.WaitForCacheSync(ctx) {
+		return ctx.Err()
+	}
 
 	return nil
 }

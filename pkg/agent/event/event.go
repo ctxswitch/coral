@@ -1,4 +1,4 @@
-package agent
+package event
 
 import "sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -11,13 +11,21 @@ const (
 )
 
 type Event struct {
-	op  Operation
-	obj client.Object
+	Op     Operation
+	Object client.Object
 }
 
 func NewEvent(obj client.Object, op Operation) *Event {
 	return &Event{
-		op:  op,
-		obj: obj,
+		Op:     op,
+		Object: obj,
 	}
+}
+
+func (e *Event) GetOperationString() string {
+	return []string{
+		"create",
+		"delete",
+		"update",
+	}[e.Op]
 }
