@@ -14,7 +14,7 @@ require (
 	k8s.io/cri-api v0.32.2
 	k8s.io/cri-client v0.32.2
 	k8s.io/klog/v2 v2.130.1
-	sigs.k8s.io/controller-runtime v0.20.2
+	sigs.k8s.io/controller-runtime v0.20.4
 )
 
 require (
