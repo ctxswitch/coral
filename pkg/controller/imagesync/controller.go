@@ -16,9 +16,12 @@ package imagesync
 
 import (
 	"context"
+	coralv1beta1 "ctx.sh/coral/pkg/apis/coral.ctx.sh/v1beta1"
+	"ctx.sh/coral/pkg/util"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"time"
 
-	coralv1beta1 "ctx.sh/coral/pkg/apis/coral.ctx.sh/v1beta1"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
@@ -26,7 +29,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
 type Controller struct {
@@ -54,7 +56,7 @@ func SetupWithManager(mgr ctrl.Manager) error {
 
 func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
-	logger.V(6).Info("reconciling image", "request", req)
+	logger.V(4).Info("reconciling image", "request", req)
 
 	observed := NewObservedState()
 	observer := StateObserver{
@@ -74,17 +76,92 @@ func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		}, err
 	}
 
+	isync := observed.ImageSync
+
 	// The image has been deleted.
 	if observed.ImageSync == nil {
 		return ctrl.Result{}, nil
 	}
 
-	logger.V(6).Info("reconciling", "obj", observed.ImageSync)
+	if !controllerutil.ContainsFinalizer(isync, coralv1beta1.ImageSyncFinalizer) {
+		return ctrl.Result{Requeue: true}, c.addFinalizer(ctx, isync)
+	}
 
-	// Currently ignore.  Status update process will be incoming.
-	// TODO: controller-up/modify the status update process passing it the cache.
-	//  - Do I want a node watcher?
-	//  - Will label updates trigger node events?
-	// Initially we can be greedy and just do node lists.
+	if !isync.DeletionTimestamp.IsZero() {
+		return ctrl.Result{}, c.removeFinalizer(ctx, isync)
+	}
+
+	if isync.HasNotChanged() {
+		logger.V(4).Info("imagesync has not changed, skipping", "request", req)
+		return ctrl.Result{}, nil
+	}
+
+	if err := c.update(ctx, isync); err != nil {
+		logger.Error(err, "unable to update imagesync status", "request", req)
+		return ctrl.Result{}, err
+	}
+
+	// Update status
+	if err := c.updateStatus(ctx, isync); err != nil {
+		logger.Error(err, "unable to update imagesync status", "request", req)
+		return ctrl.Result{}, err
+	}
+
+	// TODO: register with the status updater
+
 	return ctrl.Result{}, nil
+}
+
+func (c *Controller) addFinalizer(ctx context.Context, isync *coralv1beta1.ImageSync) error {
+	controllerutil.AddFinalizer(isync, coralv1beta1.ImageSyncFinalizer)
+	if err := c.Update(ctx, isync); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Controller) finalize(ctx context.Context, isync *coralv1beta1.ImageSync) error {
+	// TODO: Add finalizer logic here
+	return nil
+}
+
+func (c *Controller) generateImageLabelMap(ctx context.Context, imageSync *coralv1beta1.ImageSync) []coralv1beta1.ImageSyncImage {
+	images := make([]coralv1beta1.ImageSyncImage, 0)
+	for _, image := range imageSync.Spec.Images {
+		fqn := util.GetImageQualifiedName(util.DefaultSearchRegistry, image)
+		checksum := util.GetImageLabelValue(fqn)
+		images = append(images, coralv1beta1.ImageSyncImage{
+			Name:  image,
+			Image: fqn,
+			Label: checksum,
+		})
+	}
+	return images
+}
+
+func (c *Controller) removeFinalizer(ctx context.Context, isync *coralv1beta1.ImageSync) error {
+	if controllerutil.ContainsFinalizer(isync, coralv1beta1.ImageSyncFinalizer) {
+		if err := c.finalize(ctx, isync); err != nil {
+			return err
+		}
+
+		controllerutil.RemoveFinalizer(isync, coralv1beta1.ImageSyncFinalizer)
+		if err := c.Update(ctx, isync); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (c *Controller) update(ctx context.Context, isync *coralv1beta1.ImageSync) error {
+	isync.SetProcessed()
+	return c.Update(ctx, isync)
+}
+
+func (c *Controller) updateStatus(ctx context.Context, isync *coralv1beta1.ImageSync) error {
+	isync.Status.Images = c.generateImageLabelMap(ctx, isync)
+	isync.Status.Revision = isync.GetRevisionHash()
+	return c.Status().Update(ctx, isync)
 }

@@ -19,8 +19,10 @@ const (
 	DefaultEnableLeaderElection bool   = false
 	DefaultSkipInsecureVerify   bool   = false
 	DefaultLogLevel             int8   = 4
-	DefaultContainerdAddr       string = "unix:///kubelet/containerd/containerd.sock"
-	DefaultNamespace            string = ""
-	DefaultScope                string = ""
-	DefaultWorkers              int    = 10
+	// TODO: change to unix:///run/containerd/containerd.sock
+	DefaultContainerdAddr           string = "unix:///run/containerd/containerd.sock"
+	DefaultNamespace                string = ""
+	DefaultScope                    string = ""
+	DefaultMaxConcurrentPullers     int    = 10
+	DefaultMaxConcurrentReconcilers int    = 3
 )

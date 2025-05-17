@@ -29,11 +29,6 @@ spec:
       jsonPath: .status.condition.pending
       name: Pending
       type: integer
-    - description: The number of images that are in an unknown state on the nodes
-      jsonPath: .status.condition.unknown
-      name: Unknown
-      priority: 1
-      type: integer
     - description: The number of nodes matching the selector (if any)
       jsonPath: .status.totalNodes
       name: Nodes
@@ -69,7 +64,7 @@ spec:
                   type: string
                 type: array
                 x-kubernetes-list-type: atomic
-              selector:
+              nodeSelector:
                 items:
                   properties:
                     key:
@@ -98,13 +93,33 @@ spec:
                     type: integer
                   pending:
                     type: integer
-                  unknown:
-                    type: integer
                 required:
                 - available
                 - pending
-                - unknown
                 type: object
+              images:
+                items:
+                  properties:
+                    available:
+                      type: integer
+                    image:
+                      type: string
+                    label:
+                      type: string
+                    name:
+                      type: string
+                    pending:
+                      type: integer
+                  required:
+                  - image
+                  - label
+                  - name
+                  type: object
+                type: array
+              revision:
+                type: string
+              state:
+                type: string
               totalImages:
                 type: integer
               totalNodes:

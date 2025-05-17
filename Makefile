@@ -187,7 +187,7 @@ localdev-clean:
 .PHONY: controller-run
 controller-run:
 	$(eval POD := $(shell kubectl get pods -n coral-system -l app=controller -o=custom-columns=:metadata.name --no-headers))
-	@$(KUBECTL) exec -n coral-system -it pod/$(POD) -- bash -c "go run pkg/cmd/coral/*.go controller --log-level=6 --skip-insecure-verify=true"
+	@$(KUBECTL) exec -n coral-system -it pod/$(POD) -- bash -c "go run pkg/cmd/coral/*.go controller --log-level=4 --skip-insecure-verify=true"
 
 .PHONY: controller-exec
 controller-exec:
@@ -197,7 +197,7 @@ controller-exec:
 .PHONY: agent-run
 agent-run:
 	$(eval POD := $(shell kubectl get pods -n coral-system -l app=agent -o=custom-columns=:metadata.name --no-headers))
-	@$(KUBECTL) exec -n coral-system -it pod/$(POD) -- bash -c "go run pkg/cmd/coral/*.go agent --log-level=6"
+	@$(KUBECTL) exec -n coral-system -it pod/$(POD) -- bash -c "go run pkg/cmd/coral/*.go agent --log-level=4"
 
 .PHONY: agent-exec
 agent-exec:

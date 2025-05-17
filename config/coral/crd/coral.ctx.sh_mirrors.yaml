@@ -36,10 +36,19 @@ spec:
             type: object
           spec:
             properties:
+              imagePullSecrets:
+                items:
+                  properties:
+                    name:
+                      default: ""
+                      type: string
+                  type: object
+                  x-kubernetes-map-type: atomic
+                nullable: true
+                type: array
               images:
                 items:
                   type: string
-                nullable: true
                 type: array
               localRegistry:
                 type: string

@@ -97,7 +97,8 @@ func AgentCommand() *cobra.Command {
 
 	cmd.PersistentFlags().Int8VarP(&a.LogLevel, "log-level", "v", DefaultLogLevel, "set the log level (integer value)")
 	cmd.PersistentFlags().StringVarP(&a.ContainerdAddr, "containerd-addr", "A", DefaultContainerdAddr, "set the containerd address")
-	cmd.PersistentFlags().IntVarP(&a.Workers, "workers", "w", DefaultWorkers, "set the number of agent workers")
+	cmd.PersistentFlags().IntVarP(&a.MaxConcurrentReconcilers, "max-concurrent-reconcilers", "", DefaultMaxConcurrentReconcilers, "set the max concurrency for resource reconciliation")
+	cmd.PersistentFlags().IntVarP(&a.MaxConcurrentPullers, "max-concurrent-pullers", "", DefaultMaxConcurrentPullers, "set the max concurrency for pulling images")
 
 	return cmd
 }

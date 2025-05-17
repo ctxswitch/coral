@@ -41,17 +41,30 @@ type StateObserver struct {
 }
 
 func (o *StateObserver) observe(ctx context.Context, observed *ObservedState) error {
-	var err error
-	observedImageSync := new(coralctxshv1beta1.ImageSync)
-	err = o.Client.Get(ctx, o.Request.NamespacedName, observedImageSync)
+	observedImageSync, err := o.observerImageSync(ctx)
 	if err != nil {
-		if client.IgnoreNotFound(err) != nil {
-			return err
-		}
+		return err
+	}
+
+	if observedImageSync == nil {
 		return nil
 	}
+
 	coralctxshv1beta1.Defaulted(observedImageSync)
 	observed.ImageSync = observedImageSync
 
 	return nil
+}
+
+func (o *StateObserver) observerImageSync(ctx context.Context) (*coralctxshv1beta1.ImageSync, error) {
+	observedImageSync := new(coralctxshv1beta1.ImageSync)
+	err := o.Client.Get(ctx, o.Request.NamespacedName, observedImageSync)
+	if err != nil {
+		if client.IgnoreNotFound(err) != nil {
+			return nil, err
+		}
+		return nil, nil
+	}
+
+	return observedImageSync.DeepCopy(), nil
 }

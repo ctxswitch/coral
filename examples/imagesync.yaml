@@ -2,6 +2,13 @@ apiVersion: coral.ctx.sh/v1beta1
 kind: ImageSync
 metadata:
   name: examples
+  namespace: coral-system
 spec:
+  nodeSelector:
+    - key: kubernetes.io/os
+      operator: in
+      values:
+        - linux
   images:
-    - nginx:latest
+    - nginx
+    - golang:latest

@@ -1,27 +1,17 @@
 package agent
 
 import (
+	"ctx.sh/coral/pkg/agent/watcher"
+	corev1 "k8s.io/api/core/v1"
 	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"time"
 
-	"ctx.sh/coral/pkg/agent"
 	coralv1beta1 "ctx.sh/coral/pkg/apis/coral.ctx.sh/v1beta1"
-	"github.com/go-logr/logr"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap/zapcore"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	crun "k8s.io/cri-api/pkg/apis/runtime/v1"
-	"k8s.io/cri-client/pkg/util"
-	"k8s.io/klog/v2"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 )
 
 const (
@@ -30,23 +20,23 @@ const (
 )
 
 type Agent struct {
-	ContainerdAddr string
-	LogLevel       int8
-	Workers        int
+	ContainerdAddr           string
+	LogLevel                 int8
+	MaxConcurrentReconcilers int
+	MaxConcurrentPullers     int
 }
 
 func (a *Agent) RunE(cmd *cobra.Command, args []string) error {
 	scheme := runtime.NewScheme()
 	_ = coralv1beta1.AddToScheme(scheme)
 	_ = corev1.AddToScheme(scheme)
-	_ = appsv1.AddToScheme(scheme)
 
 	log := zap.New(
 		zap.Level(zapcore.Level(a.LogLevel) * -1),
 	)
 
-	ctx := signals.SetupSignalHandler()
-	ctx = logr.NewContext(ctx, log)
+	ctx := ctrl.SetupSignalHandler()
+	ctrl.SetLogger(log)
 
 	nodeName := os.Getenv("NODE_NAME")
 	if nodeName == "" {
@@ -54,69 +44,23 @@ func (a *Agent) RunE(cmd *cobra.Command, args []string) error {
 		os.Exit(1)
 	}
 
-	ims, rts, err := a.connectContainerRuntime(a.ContainerdAddr)
-	if err != nil {
-		log.Error(err, "failed to connect to container runtime")
-		os.Exit(1)
-	}
-
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:         scheme,
-		LeaderElection: false,
-	})
-	if err != nil {
-		log.Error(err, "unable to start manager")
-	}
-
-	ag := agent.SetupWithManager(mgr, &agent.Options{
-		ImageServiceClient:   ims,
-		RuntimeServiceClient: rts,
-		Workers:              a.Workers,
-	})
-
-	if err := ag.Start(ctx); err != nil {
-		log.Error(err, "failed to start agent")
-		os.Exit(1)
-	}
-
-	return nil
-}
-
-func (a *Agent) connectContainerRuntime(addr string) (crun.ImageServiceClient, crun.RuntimeServiceClient, error) {
-	addr, dialer, err := util.GetAddressAndDialer(addr)
-	if err != nil {
-		klog.ErrorS(err, "Get container runtime address failed")
-		return nil, nil, err
-	}
-
-	conn, err := grpc.NewClient(
-		addr,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithContextDialer(dialer),
-		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(MaxCallRecvMsgSize)),
-	)
-	if err != nil {
-		klog.ErrorS(err, "Connect remote image service failed", "address", addr)
-		return nil, nil, err
-	}
-
-	ims := crun.NewImageServiceClient(conn)
-	rts := crun.NewRuntimeServiceClient(conn)
-	return ims, rts, nil
-}
-
-func (a *Agent) connectKubeClient() (client.Client, error) {
-	scheme := runtime.NewScheme()
-	_ = coralv1beta1.AddToScheme(scheme)
-	_ = corev1.AddToScheme(scheme)
-	_ = appsv1.AddToScheme(scheme)
-
-	c, err := client.New(config.GetConfigOrDie(), client.Options{
 		Scheme: scheme,
 	})
 	if err != nil {
-		return nil, err
+		log.Error(err, "unable to initialize manager")
+		return err
 	}
 
-	return c, nil
+	if err = watcher.SetupWithManager(ctx, mgr, &watcher.Options{
+		ContainerAddr:            a.ContainerdAddr,
+		MaxConcurrentReconcilers: a.MaxConcurrentReconcilers,
+		MaxConcurrentPullers:     a.MaxConcurrentPullers,
+		NodeName:                 nodeName,
+	}); err != nil {
+		log.Error(err, "unable to setup controllers")
+		os.Exit(1)
+	}
+
+	return mgr.Start(ctx)
 }

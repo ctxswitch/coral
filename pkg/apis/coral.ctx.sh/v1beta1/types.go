@@ -25,8 +25,11 @@ import (
 // +kubebuilder:docs-gen:collapse=Go imports
 
 const (
-	ImageSyncFinalizer = "imagesync.coral.ctx.sh/finalizer"
-	MirrorFinalizer    = "mirror.coral.ctx.sh/finalizer"
+	ImageSyncFinalizer  = "imagesync.coral.ctx.sh/finalizer"
+	MirrorFinalizer     = "mirror.coral.ctx.sh/finalizer"
+	ImageSyncLabel      = "imagesync.coral.ctx.sh"
+	ProcessedLabelName  = ImageSyncLabel + "/processed"
+	ProcessedLabelValue = "true"
 )
 
 type NodeSelector struct {
@@ -34,12 +37,6 @@ type NodeSelector struct {
 	Operator selection.Operator `json:"operator"`
 	Values   []string           `json:"values"`
 }
-
-type ListSelector string
-
-const (
-	ListSelectorAll ListSelector = "all"
-)
 
 // ImageSyncSpec is the spec for a Image resource.
 type ImageSyncSpec struct {
@@ -49,12 +46,12 @@ type ImageSyncSpec struct {
 	Images []string `json:"images"`
 	// +optional
 	// +nullable
-	// Selector defines which nodes the image should be synced to.
-	Selector []NodeSelector `json:"selector"`
+	// NodeSelector defines which nodes the image should be synced to.
+	NodeSelector []NodeSelector `json:"nodeSelector,omitempty"`
 	// +optional
 	// +nullable
 	// ImagePullSecrets is a list of secrets to use when pulling the image.
-	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets"`
+	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets,omitempty"`
 }
 
 // +genclient
@@ -66,7 +63,6 @@ type ImageSyncSpec struct {
 // +kubebuilder:printcolumn:name="Images",type="integer",JSONPath=".status.totalImages",description="The number of total images managed by the object"
 // +kubebuilder:printcolumn:name="Available",type="integer",JSONPath=".status.condition.available",description="The number of images that are currently available on the nodes"
 // +kubebuilder:printcolumn:name="Pending",type="integer",JSONPath=".status.condition.pending",description="The number of images that are currently pending on the nodes"
-// +kubebuilder:printcolumn:name="Unknown",type="integer",JSONPath=".status.condition.unknown",description="The number of images that are in an unknown state on the nodes",priority=1
 // +kubebuilder:printcolumn:name="Nodes",type="integer",JSONPath=".status.totalNodes",description="The number of nodes matching the selector (if any)",priority=1
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 
@@ -90,6 +86,7 @@ type ImageSyncList struct {
 type ImageSyncState string
 
 const (
+	ImageStateUpdating  ImageSyncState = "updating"
 	ImageStatePending   ImageSyncState = "pending"
 	ImageStateAvailable ImageSyncState = "available"
 	ImageStateUnknown   ImageSyncState = "unknown"
@@ -103,39 +100,65 @@ type ImageSyncCondition struct {
 	// +required
 	// Pending is the number of images that are currently pending on the nodes.
 	Pending int `json:"pending"`
+}
+
+// ImageSyncImage contains details about an image that is being synced.
+type ImageSyncImage struct {
 	// +required
-	// Unknown is the number of images that are in an unknown state on the nodes.
-	Unknown int `json:"unknown"`
+	// Name is the name of the image that the user has defined.
+	Name string `json:"name,omitempty"`
+	// +required
+	// Image is the fully qualified image with tag that is being synced.  This represents what is
+	// being parsed and represented on the agents, nodes, and webhooks.
+	Image string `json:"image,omitempty"`
+	// +required
+	// Label is the digest of the image that is being synced.
+	Label string `json:"label,omitempty"`
+	// +optional
+	// Available is the number of nodes that have the image available.
+	Available int `json:"available,omitempty"`
+	// +optional
+	// Pending is the number of nodes that are pending image download.
+	Pending int `json:"pending,omitempty"`
 }
 
 // ImageSyncStatus is the status for a WatchSet resource.
 type ImageSyncStatus struct {
 	// +optional
 	// TotalNodes is the number of nodes that should have the image prefetched.
-	TotalNodes int `json:"totalNodes"`
+	TotalNodes int `json:"totalNodes,omitempty"`
 	// +optional
 	// TotalImages is the number of total images managed by the object.
-	TotalImages int `json:"totalImages"`
+	TotalImages int `json:"totalImages,omitempty"`
 	// +optional
 	// Condition is the current state of the images on the nodes.
-	Condition ImageSyncCondition `json:"condition"`
+	Condition ImageSyncCondition `json:"condition,omitempty"`
 	// +optional
 	// Data is a list of image data that will be used to track the images on the nodes.
 	// Data []ImageSyncData `json:"data"`
+	// +optional
+	// The current state of the image sync resource.
+	State ImageSyncState `json:"state,omitempty"`
+	// +optional
+	// Images is a list of images with label mappings.
+	Images []ImageSyncImage `json:"images,omitempty"`
+	// +optional
+	// Revision is the hash of the current image sync resource.
+	Revision string `json:"revision,omitempty"`
 }
 
 type MirrorSpec struct {
 	// +required
 	// LocalRegistry is the url to the local registry
-	LocalRegistry string `json:"localRegistry"`
+	LocalRegistry string `json:"localRegistry,omitempty"`
 	// +optional
 	// +nullable
 	// ImagePullSecrets is a list of secrets to use when pulling the image.
-	// ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets"`
+	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets"`
 	// +optional
 	// Images is a list of images and tags that will be mirrored.  It is in the form
 	// of <registry>/<image>:tag.
-	Images []string `json:"images"`
+	Images []string `json:"images,omitempty"`
 }
 
 // +genclient
