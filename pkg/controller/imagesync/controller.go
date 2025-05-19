@@ -133,9 +133,9 @@ func (c *Controller) generateImageLabelMap(_ context.Context, imageSync *coralv1
 		fqn := util.GetImageQualifiedName(util.DefaultSearchRegistry, image)
 		checksum := util.GetImageLabelValue(fqn)
 		images = append(images, coralv1beta1.ImageSyncImage{
-			Name:  image,
-			Image: fqn,
-			Label: checksum,
+			Name:      image,
+			Image:     fqn,
+			Reference: checksum,
 		})
 	}
 	return images

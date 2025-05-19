@@ -112,8 +112,8 @@ type ImageSyncImage struct {
 	// being parsed and represented on the agents, nodes, and webhooks.
 	Image string `json:"image,omitempty"`
 	// +required
-	// Label is the digest of the image that is being synced.
-	Label string `json:"label,omitempty"`
+	// Reference is the digest of the image that is being synced.
+	Reference string `json:"reference,omitempty"`
 	// +optional
 	// Available is the number of nodes that have the image available.
 	Available int `json:"available,omitempty"`

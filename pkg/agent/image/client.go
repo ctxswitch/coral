@@ -31,7 +31,7 @@ func (c *Client) Connect(ctx context.Context, addr string) error {
 	return c.service.Connect(ctx, addr)
 }
 
-func (c *Client) Pull(ctx context.Context, id, name string) error {
+func (c *Client) Pull(ctx context.Context, id, name, ref string) error {
 	c.Lock()
 	defer c.Unlock()
 
@@ -44,14 +44,14 @@ func (c *Client) Pull(ctx context.Context, id, name string) error {
 		return err
 	}
 
-	if err := c.node.Update(ctx, name); err != nil {
+	if err := c.node.Update(ctx, name, ref); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (c *Client) Delete(ctx context.Context, id, name string) error {
+func (c *Client) Delete(ctx context.Context, id, name, ref string) error {
 	c.Lock()
 	defer c.Unlock()
 
@@ -59,7 +59,7 @@ func (c *Client) Delete(ctx context.Context, id, name string) error {
 		return ErrNodeNotReady
 	}
 
-	err := c.node.Remove(ctx, name)
+	err := c.node.Remove(ctx, name, ref)
 	if err != nil {
 		return err
 	}

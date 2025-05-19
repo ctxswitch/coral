@@ -8,9 +8,9 @@ import (
 
 type ImageClient interface {
 	// Pull pulls a container image if not present.
-	Pull(ctx context.Context, id, name string) error
+	Pull(ctx context.Context, id, name, ref string) error
 	// Delete deletes a container image that is not in use.
-	Delete(ctx context.Context, id, name string) error
+	Delete(ctx context.Context, id, name, ref string) error
 	// Matches returns true if the node matches the selectors.
 	Matches(ctx context.Context, selectors []coralv1beta1.NodeSelector) (bool, error)
 }

@@ -104,16 +104,16 @@ spec:
                       type: integer
                     image:
                       type: string
-                    label:
-                      type: string
                     name:
                       type: string
                     pending:
                       type: integer
+                    reference:
+                      type: string
                   required:
                   - image
-                  - label
                   - name
+                  - reference
                   type: object
                 type: array
               revision:

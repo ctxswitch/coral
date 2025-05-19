@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	coralv1beta1 "ctx.sh/coral/pkg/apis/coral.ctx.sh/v1beta1"
-	"ctx.sh/coral/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -31,7 +30,7 @@ func NewNode(opts *NodeOptions) *Node {
 	}
 }
 
-func (n *Node) Update(ctx context.Context, img string) error {
+func (n *Node) Update(ctx context.Context, img, ref string) error {
 	n.Lock()
 	defer n.Unlock()
 
@@ -41,16 +40,13 @@ func (n *Node) Update(ctx context.Context, img string) error {
 		return err
 	}
 
-	fqn := util.GetImageQualifiedName(util.DefaultSearchRegistry, img)
-	ref := util.GetImageLabelValue(fqn)
 	log.V(4).Info("updating node label", "ref", ref)
-
 	n.addNodeLabel(coralv1beta1.ImageSyncLabel+"/"+ref, "present")
 
 	return n.update(ctx)
 }
 
-func (n *Node) Remove(ctx context.Context, img string) error {
+func (n *Node) Remove(ctx context.Context, img, ref string) error {
 	n.Lock()
 	defer n.Unlock()
 
@@ -60,11 +56,7 @@ func (n *Node) Remove(ctx context.Context, img string) error {
 		return err
 	}
 
-	fqn := util.GetImageQualifiedName(util.DefaultSearchRegistry, img)
-	ref := util.GetImageLabelValue(fqn)
-
 	log.V(4).Info("removing node label", "ref", ref)
-
 	n.removeNodeLabel(coralv1beta1.ImageSyncLabel + "/" + ref)
 
 	return n.update(ctx)

@@ -79,13 +79,11 @@ func (w *Watcher) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result,
 	if !ok {
 		// Ensure that we don't have any images for this imagesync resource in case
 		// the node selector has changed.
-		log.V(4).Info("node selector does not match, ensuring we no longer are managing images")
-
+		log.V(4).Info("node selector does not match")
 		w.delete(ctx, isync)
 		return ctrl.Result{}, nil
 	}
 
-	// TODO: is it possible that I miss a delete event?
 	if !isync.DeletionTimestamp.IsZero() {
 		log.V(2).Info("imagesync is being deleted, cleaning up")
 		w.delete(ctx, isync)
@@ -101,7 +99,9 @@ func (w *Watcher) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result,
 func (w *Watcher) add(ctx context.Context, obj *coralv1beta1.ImageSync) {
 	wg := sync.WaitGroup{}
 
-	for _, img := range obj.Spec.Images {
+	uid := string(obj.GetUID())
+
+	for _, img := range obj.Status.Images {
 		// TODO: Is there a possibility that we wind up with orphans by adding here?  We need fqn as key?
 		w.workQueue.Acquire()
 		wg.Add(1)
@@ -109,7 +109,7 @@ func (w *Watcher) add(ctx context.Context, obj *coralv1beta1.ImageSync) {
 			defer w.workQueue.Release()
 			defer wg.Done()
 			// TODO: If there are errors requeue.
-			_ = w.imageClient.Pull(ctx, string(obj.GetUID()), img)
+			_ = w.imageClient.Pull(ctx, uid, img.Image, img.Reference)
 		}()
 	}
 	wg.Wait()
@@ -117,7 +117,10 @@ func (w *Watcher) add(ctx context.Context, obj *coralv1beta1.ImageSync) {
 
 func (w *Watcher) delete(ctx context.Context, obj *coralv1beta1.ImageSync) {
 	wg := sync.WaitGroup{}
-	for _, img := range obj.Spec.Images {
+
+	uid := string(obj.GetUID())
+
+	for _, img := range obj.Status.Images {
 		// TODO: This can go away and we will handle the reference deletion here.  If there
 		//   are no more references, then we mark it with a tombstone.
 		w.workQueue.Acquire()
@@ -126,7 +129,7 @@ func (w *Watcher) delete(ctx context.Context, obj *coralv1beta1.ImageSync) {
 			defer w.workQueue.Release()
 			defer wg.Done()
 			// TODO: If there are errors requeue.
-			_ = w.imageClient.Delete(ctx, string(obj.GetUID()), img)
+			_ = w.imageClient.Delete(ctx, uid, img.Image, img.Reference)
 		}()
 	}
 	wg.Wait()
@@ -147,7 +150,3 @@ func (w *Watcher) filter(ctx context.Context, obj *coralv1beta1.ImageSync) []ctr
 	}
 	return []ctrl.Request{}
 }
-
-// func (w *Watcher) isManaged(ctx context.Context, obj *coralv1beta1.ImageSync) bool {
-// 	return false
-// }
