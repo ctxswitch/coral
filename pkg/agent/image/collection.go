@@ -1,13 +1,14 @@
 package image
 
 import (
-	"ctx.sh/coral/pkg/agent/store"
 	"sync"
+
+	"ctx.sh/coral/pkg/agent/store"
 )
 
 // Collection is a collection of images that are under management.  They are
 // referenced by the image name and the digest of the image.
-// Collection [name]->[[digest]] -> [count]]
+// Collection [name]->[[digest]] -> [count]].
 type Collection struct {
 	images map[Name]*store.Store[Digest]
 	refs   map[Key]Digest
@@ -36,14 +37,6 @@ func (c *Collection) Add(uuid, name, digest string) {
 		return
 	}
 
-	if _, ok := c.images[name]; !ok {
-		c.images[name] = store.New[string]()
-	}
-
-	c.images[name].Add(digest)
-}
-
-func (c *Collection) add(name string, digest string) {
 	if _, ok := c.images[name]; !ok {
 		c.images[name] = store.New[string]()
 	}

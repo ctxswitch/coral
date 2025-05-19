@@ -2,6 +2,8 @@ package imagesync
 
 import (
 	"context"
+	"sync"
+
 	"ctx.sh/coral/pkg/agent/image"
 	coralv1beta1 "ctx.sh/coral/pkg/apis/coral.ctx.sh/v1beta1"
 	"ctx.sh/coral/pkg/queue"
@@ -12,7 +14,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-	"sync"
 )
 
 type Options struct {
@@ -24,7 +25,6 @@ type Options struct {
 }
 
 type Watcher struct {
-	collection  *image.Collection
 	workQueue   *queue.Queue
 	nodeName    string
 	imageClient image.ImageClient
@@ -41,26 +41,10 @@ func SetupWithManager(mgr ctrl.Manager, opts *Options) error {
 		Client: mgr.GetClient(),
 	}
 
-	filter := func(ctx context.Context, obj *coralv1beta1.ImageSync) []ctrl.Request {
-		// Only return objects that have been processed through the core reconciler. Technically
-		// we would only need this if relying on status information that is added by the controller.
-		// Even though we are not right now, I'll keep this in just in case we want something in
-		// the future.
-		if obj.IsProcessed() {
-			return []ctrl.Request{{
-				NamespacedName: types.NamespacedName{
-					Name:      obj.GetName(),
-					Namespace: obj.GetNamespace(),
-				},
-			}}
-		}
-		return []ctrl.Request{}
-	}
-
 	src := source.Kind(
 		mgr.GetCache(),
 		&coralv1beta1.ImageSync{},
-		handler.TypedEnqueueRequestsFromMapFunc(filter),
+		handler.TypedEnqueueRequestsFromMapFunc(w.filter),
 	)
 
 	return ctrl.NewControllerManagedBy(mgr).
@@ -93,9 +77,11 @@ func (w *Watcher) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result,
 	}
 
 	if !ok {
-		// TODO: if we get an object in that we were tracking and we no longer match the
-		//   selector we need to treat it as a delete event.
-		log.V(4).Info("node selector does not match, skipping")
+		// Ensure that we don't have any images for this imagesync resource in case
+		// the node selector has changed.
+		log.V(4).Info("node selector does not match, ensuring we no longer are managing images")
+
+		w.delete(ctx, isync)
 		return ctrl.Result{}, nil
 	}
 
@@ -117,7 +103,7 @@ func (w *Watcher) add(ctx context.Context, obj *coralv1beta1.ImageSync) {
 
 	for _, img := range obj.Spec.Images {
 		// TODO: Is there a possibility that we wind up with orphans by adding here?  We need fqn as key?
-		w.workQueue.Aquire()
+		w.workQueue.Acquire()
 		wg.Add(1)
 		go func() {
 			defer w.workQueue.Release()
@@ -134,7 +120,7 @@ func (w *Watcher) delete(ctx context.Context, obj *coralv1beta1.ImageSync) {
 	for _, img := range obj.Spec.Images {
 		// TODO: This can go away and we will handle the reference deletion here.  If there
 		//   are no more references, then we mark it with a tombstone.
-		w.workQueue.Aquire()
+		w.workQueue.Acquire()
 		wg.Add(1)
 		go func() {
 			defer w.workQueue.Release()
@@ -161,3 +147,7 @@ func (w *Watcher) filter(ctx context.Context, obj *coralv1beta1.ImageSync) []ctr
 	}
 	return []ctrl.Request{}
 }
+
+// func (w *Watcher) isManaged(ctx context.Context, obj *coralv1beta1.ImageSync) bool {
+// 	return false
+// }

@@ -1,9 +1,10 @@
 package cache
 
 import (
+	"testing"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"testing"
 )
 
 func TestCache_ResourcesFor(t *testing.T) {
@@ -19,5 +20,4 @@ func TestCache_ResourcesFor(t *testing.T) {
 	c.CacheFor(obj)
 
 	// what happens if we add multiple types in the same resource group.
-
 }

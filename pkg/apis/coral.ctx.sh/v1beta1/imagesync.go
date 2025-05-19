@@ -1,13 +1,14 @@
 package v1beta1
 
 import (
-	"crypto/md5"
+	"crypto/md5" // #nosec G501
 	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func (i *ImageSync) GetRevisionHash() string {
-	hasher := md5.New()
+	hasher := md5.New() // #nosec G401
 	obj := ImageSync{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      i.GetName(),

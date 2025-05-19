@@ -2,9 +2,10 @@ package image
 
 import (
 	"context"
+	"sync"
+
 	coralv1beta1 "ctx.sh/coral/pkg/apis/coral.ctx.sh/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sync"
 )
 
 type Client struct {
@@ -76,6 +77,13 @@ func (c *Client) Matches(ctx context.Context, selectors []coralv1beta1.NodeSelec
 	defer c.Unlock()
 
 	return c.node.Matches(ctx, selectors)
+}
+
+func (c *Client) Managed(ctx context.Context, id, name string) (bool, error) {
+	c.Lock()
+	defer c.Unlock()
+
+	return false, nil
 }
 
 var _ ImageClient = &Client{}

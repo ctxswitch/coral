@@ -2,10 +2,11 @@ package cache
 
 import (
 	"fmt"
+	"sync"
+
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sync"
 )
 
 type Resources struct {
@@ -74,13 +75,13 @@ func (r *Resources) Get(k types.NamespacedName) (client.Object, bool) {
 	defer r.Unlock()
 
 	v, ok := r.items[k]
-	
+
 	return v, ok
 }
 
-func (r *Resources) Size() int {
+func (r *Resources) Size() uint64 {
 	r.Lock()
 	defer r.Unlock()
 
-	return int(r.size)
+	return r.size
 }

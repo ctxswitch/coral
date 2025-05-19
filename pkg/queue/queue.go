@@ -4,13 +4,13 @@ type Queue struct {
 	events chan int
 }
 
-func New(max uint32) *Queue {
+func New(max int) *Queue {
 	return &Queue{
 		events: make(chan int, max),
 	}
 }
 
-func (q *Queue) Aquire() {
+func (q *Queue) Acquire() {
 	q.events <- 1
 }
 

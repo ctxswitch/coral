@@ -1,11 +1,12 @@
 package agent
 
 import (
+	"os"
+	"time"
+
 	"ctx.sh/coral/pkg/agent/watcher"
 	corev1 "k8s.io/api/core/v1"
-	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"time"
 
 	coralv1beta1 "ctx.sh/coral/pkg/apis/coral.ctx.sh/v1beta1"
 	"github.com/spf13/cobra"

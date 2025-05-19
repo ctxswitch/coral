@@ -2,10 +2,11 @@ package imagesync
 
 import (
 	"context"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"time"
 
-	// "sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	// "sigs.k8s.io/controller-runtime/pkg/manager".
 	"sync"
 )
 

@@ -1,7 +1,7 @@
 package util
 
 import (
-	"crypto/md5"
+	"crypto/md5" // #nosec G501
 	"encoding/hex"
 	"strings"
 )
@@ -26,13 +26,13 @@ func GetImageQualifiedName(search, image string) string {
 
 	parts = strings.SplitN(image, ":", 2)
 	if len(parts) == 1 {
-		name = name + ":latest"
+		name += ":latest"
 	}
 
 	return name
 }
 
 func GetImageLabelValue(image string) string {
-	md5Hash := md5.Sum([]byte(image))
+	md5Hash := md5.Sum([]byte(image)) // #nosec G401
 	return hex.EncodeToString(md5Hash[:])
 }

@@ -2,6 +2,7 @@ package watcher
 
 import (
 	"context"
+
 	"ctx.sh/coral/pkg/agent/image"
 	"ctx.sh/coral/pkg/agent/watcher/imagesync"
 	"ctx.sh/coral/pkg/queue"
@@ -17,24 +18,24 @@ type Options struct {
 
 type Watcher struct{}
 
-func SetupWithManager(ctx context.Context, mgr ctrl.Manager, opts *Options) (err error) {
+func SetupWithManager(ctx context.Context, mgr ctrl.Manager, opts *Options) error {
 	imageClient := image.New(mgr.GetClient(), opts.NodeName)
-	if err = imageClient.Connect(ctx, opts.ContainerAddr); err != nil {
+	if err := imageClient.Connect(ctx, opts.ContainerAddr); err != nil {
 		return err
 	}
 
-	wq := queue.New(uint32(opts.MaxConcurrentPullers))
+	wq := queue.New(opts.MaxConcurrentPullers)
 
-	if err = imagesync.SetupWithManager(mgr, &imagesync.Options{
+	if err := imagesync.SetupWithManager(mgr, &imagesync.Options{
 		WorkQueue:                wq,
 		MaxConcurrentReconcilers: opts.MaxConcurrentReconcilers,
 		ImageClient:              imageClient,
 		NodeName:                 opts.NodeName,
 	}); err != nil {
-		return
+		return err
 	}
 
 	// TODO: set up polling node watcher.
 
-	return
+	return nil
 }

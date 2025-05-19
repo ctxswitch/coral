@@ -2,8 +2,10 @@ package image
 
 import (
 	"context"
-	iutil "ctx.sh/coral/pkg/util"
 	"fmt"
+	"time"
+
+	iutil "ctx.sh/coral/pkg/util"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	crun "k8s.io/cri-api/pkg/apis/runtime/v1"
@@ -11,7 +13,6 @@ import (
 	"k8s.io/cri-client/pkg/util"
 	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"time"
 )
 
 const (
@@ -66,16 +67,16 @@ func (s *Service) Pull(ctx context.Context, id, name string) (Info, error) {
 	log := ctrl.LoggerFrom(ctx)
 
 	info, err := s.status(ctx, name)
-	if err != nil {
+	if err != nil { // nolint:nestif
 		if IsNotFound(err) {
 			log.V(3).Info("image not present, pulling", "image", name)
-			_, err := s.isc.PullImage(ctx, &runtime.PullImageRequest{
+			_, perr := s.isc.PullImage(ctx, &runtime.PullImageRequest{
 				Image: &runtime.ImageSpec{
 					Image: name,
 				},
 			})
-			if err != nil {
-				return Info{}, err
+			if perr != nil {
+				return Info{}, perr
 			}
 
 			// Retry to get the image status after pulling.  In any case return the error as if it's not
@@ -130,7 +131,7 @@ func connectContainerRuntime(ctx context.Context, addr string) (crun.ImageServic
 	ctx, cancel := context.WithTimeout(ctx, ConnectionTimeout)
 	defer cancel()
 
-	conn, err := grpc.DialContext(
+	conn, err := grpc.DialContext( // nolint:staticcheck
 		ctx,
 		addr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),

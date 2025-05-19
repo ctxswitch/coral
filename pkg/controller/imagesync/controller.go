@@ -16,11 +16,12 @@ package imagesync
 
 import (
 	"context"
+	"time"
+
 	coralv1beta1 "ctx.sh/coral/pkg/apis/coral.ctx.sh/v1beta1"
 	"ctx.sh/coral/pkg/util"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -126,7 +127,7 @@ func (c *Controller) finalize(ctx context.Context, isync *coralv1beta1.ImageSync
 	return nil
 }
 
-func (c *Controller) generateImageLabelMap(ctx context.Context, imageSync *coralv1beta1.ImageSync) []coralv1beta1.ImageSyncImage {
+func (c *Controller) generateImageLabelMap(_ context.Context, imageSync *coralv1beta1.ImageSync) []coralv1beta1.ImageSyncImage {
 	images := make([]coralv1beta1.ImageSyncImage, 0)
 	for _, image := range imageSync.Spec.Images {
 		fqn := util.GetImageQualifiedName(util.DefaultSearchRegistry, image)

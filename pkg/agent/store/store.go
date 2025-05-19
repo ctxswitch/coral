@@ -1,9 +1,10 @@
 package store
 
 import (
-	coralctxshv1beta1 "ctx.sh/coral/pkg/apis/coral.ctx.sh/v1beta1"
 	"sync"
 	"sync/atomic"
+
+	coralctxshv1beta1 "ctx.sh/coral/pkg/apis/coral.ctx.sh/v1beta1"
 )
 
 type Errors string

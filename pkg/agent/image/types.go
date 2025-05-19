@@ -2,6 +2,7 @@ package image
 
 import (
 	"context"
+
 	coralv1beta1 "ctx.sh/coral/pkg/apis/coral.ctx.sh/v1beta1"
 )
 
