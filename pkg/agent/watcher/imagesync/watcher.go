@@ -2,11 +2,10 @@ package imagesync
 
 import (
 	"context"
-	"sync"
-
 	"ctx.sh/coral/pkg/agent/image"
 	coralv1beta1 "ctx.sh/coral/pkg/apis/coral.ctx.sh/v1beta1"
 	"ctx.sh/coral/pkg/queue"
+	"golang.org/x/sync/errgroup"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -80,59 +79,63 @@ func (w *Watcher) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result,
 		// Ensure that we don't have any images for this imagesync resource in case
 		// the node selector has changed.
 		log.V(4).Info("node selector does not match")
-		w.delete(ctx, isync)
+		if err := w.delete(ctx, isync); err != nil {
+			log.Error(err, "failed to delete imagesync")
+			return ctrl.Result{}, err
+		}
 		return ctrl.Result{}, nil
 	}
 
 	if !isync.DeletionTimestamp.IsZero() {
 		log.V(2).Info("imagesync is being deleted, cleaning up")
-		w.delete(ctx, isync)
+		if err := w.delete(ctx, isync); err != nil {
+			log.Error(err, "failed to delete imagesync")
+			return ctrl.Result{}, err
+		}
 		return ctrl.Result{}, nil
 	} else {
 		log.V(2).Info("processing imagesync")
-		w.add(ctx, isync)
+		if err := w.add(ctx, isync); err != nil {
+			log.Error(err, "failed to delete imagesync")
+			return ctrl.Result{}, err
+		}
 	}
 
 	return ctrl.Result{}, nil
 }
 
-func (w *Watcher) add(ctx context.Context, obj *coralv1beta1.ImageSync) {
-	wg := sync.WaitGroup{}
+func (w *Watcher) add(ctx context.Context, obj *coralv1beta1.ImageSync) error {
+	eg, ctx := errgroup.WithContext(ctx)
 
 	uid := string(obj.GetUID())
 
 	for _, img := range obj.Status.Images {
-		// TODO: Is there a possibility that we wind up with orphans by adding here?  We need fqn as key?
-		w.workQueue.Acquire()
-		wg.Add(1)
-		go func() {
+		eg.Go(func() error {
+			w.workQueue.Acquire()
 			defer w.workQueue.Release()
-			defer wg.Done()
-			// TODO: If there are errors requeue.
-			_ = w.imageClient.Pull(ctx, uid, img.Image, img.Reference)
-		}()
+
+			return w.imageClient.Pull(ctx, uid, img.Image, img.Reference)
+		})
 	}
-	wg.Wait()
+
+	return eg.Wait()
 }
 
-func (w *Watcher) delete(ctx context.Context, obj *coralv1beta1.ImageSync) {
-	wg := sync.WaitGroup{}
+func (w *Watcher) delete(ctx context.Context, obj *coralv1beta1.ImageSync) error {
+	eg, ctx := errgroup.WithContext(ctx)
 
 	uid := string(obj.GetUID())
 
 	for _, img := range obj.Status.Images {
-		// TODO: This can go away and we will handle the reference deletion here.  If there
-		//   are no more references, then we mark it with a tombstone.
-		w.workQueue.Acquire()
-		wg.Add(1)
-		go func() {
+		eg.Go(func() error {
+			w.workQueue.Acquire()
 			defer w.workQueue.Release()
-			defer wg.Done()
-			// TODO: If there are errors requeue.
-			_ = w.imageClient.Delete(ctx, uid, img.Image, img.Reference)
-		}()
+
+			return w.imageClient.Delete(ctx, uid, img.Image, img.Reference)
+		})
 	}
-	wg.Wait()
+
+	return eg.Wait()
 }
 
 func (w *Watcher) filter(ctx context.Context, obj *coralv1beta1.ImageSync) []ctrl.Request {
