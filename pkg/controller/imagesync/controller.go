@@ -33,18 +33,24 @@ import (
 )
 
 type Controller struct {
-	Cache    cache.Cache
-	Scheme   *runtime.Scheme
-	Recorder record.EventRecorder
+	Cache         cache.Cache
+	Scheme        *runtime.Scheme
+	Recorder      record.EventRecorder
+	StatusUpdater *StatusUpdater
 	client.Client
 }
 
 func SetupWithManager(mgr ctrl.Manager) error {
+	s := &StatusUpdater{
+		Client: mgr.GetClient(),
+	}
+
 	c := &Controller{
-		Cache:    mgr.GetCache(),
-		Client:   mgr.GetClient(),
-		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor("imagesync-controller"),
+		Cache:         mgr.GetCache(),
+		Client:        mgr.GetClient(),
+		Scheme:        mgr.GetScheme(),
+		Recorder:      mgr.GetEventRecorderFor("imagesync-controller"),
+		StatusUpdater: s,
 	}
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&coralv1beta1.ImageSync{}).
@@ -107,8 +113,6 @@ func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		logger.Error(err, "unable to update imagesync status", "request", req)
 		return ctrl.Result{}, err
 	}
-
-	// TODO: register with the status updater
 
 	return ctrl.Result{}, nil
 }

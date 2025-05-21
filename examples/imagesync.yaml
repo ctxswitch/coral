@@ -5,10 +5,10 @@ metadata:
   namespace: coral-system
 spec:
   nodeSelector:
-    - key: kubernetes.io/os
+    - key: kubernetes.io/hostname
       operator: in
       values:
-        - linux
+        - k3d-coral-agent-0
   images:
     - nginx
     - golang:latest

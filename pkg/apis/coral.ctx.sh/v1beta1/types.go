@@ -61,9 +61,9 @@ type ImageSyncSpec struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Namespaced,shortName=img,singular=images
 // +kubebuilder:printcolumn:name="Images",type="integer",JSONPath=".status.totalImages",description="The number of total images managed by the object"
-// +kubebuilder:printcolumn:name="Available",type="integer",JSONPath=".status.condition.available",description="The number of images that are currently available on the nodes"
-// +kubebuilder:printcolumn:name="Pending",type="integer",JSONPath=".status.condition.pending",description="The number of images that are currently pending on the nodes"
-// +kubebuilder:printcolumn:name="Nodes",type="integer",JSONPath=".status.totalNodes",description="The number of nodes matching the selector (if any)",priority=1
+// +kubebuilder:printcolumn:name="Nodes Total",type="integer",JSONPath=".status.totalNodes",description="The number of nodes matching the selector (if any)"
+// +kubebuilder:printcolumn:name="Nodes Available",type="integer",JSONPath=".status.condition.available",description="The number of images that are currently available on the nodes"
+// +kubebuilder:printcolumn:name="Nodes Pending",type="integer",JSONPath=".status.condition.pending",description="The number of images that are currently pending on the nodes"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 
 // ImageSync is an external image that will be mirrored to each configured node.
@@ -133,12 +133,6 @@ type ImageSyncStatus struct {
 	// +optional
 	// Condition is the current state of the images on the nodes.
 	Condition ImageSyncCondition `json:"condition,omitempty"`
-	// +optional
-	// Data is a list of image data that will be used to track the images on the nodes.
-	// Data []ImageSyncData `json:"data"`
-	// +optional
-	// The current state of the image sync resource.
-	State ImageSyncState `json:"state,omitempty"`
 	// +optional
 	// Images is a list of images with label mappings.
 	Images []ImageSyncImage `json:"images,omitempty"`

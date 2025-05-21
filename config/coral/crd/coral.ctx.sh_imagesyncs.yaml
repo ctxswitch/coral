@@ -21,18 +21,17 @@ spec:
       jsonPath: .status.totalImages
       name: Images
       type: integer
+    - description: The number of nodes matching the selector (if any)
+      jsonPath: .status.totalNodes
+      name: Nodes Total
+      type: integer
     - description: The number of images that are currently available on the nodes
       jsonPath: .status.condition.available
-      name: Available
+      name: Nodes Available
       type: integer
     - description: The number of images that are currently pending on the nodes
       jsonPath: .status.condition.pending
-      name: Pending
-      type: integer
-    - description: The number of nodes matching the selector (if any)
-      jsonPath: .status.totalNodes
-      name: Nodes
-      priority: 1
+      name: Nodes Pending
       type: integer
     - jsonPath: .metadata.creationTimestamp
       name: Age
@@ -117,8 +116,6 @@ spec:
                   type: object
                 type: array
               revision:
-                type: string
-              state:
                 type: string
               totalImages:
                 type: integer
