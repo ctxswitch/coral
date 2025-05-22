@@ -63,7 +63,7 @@ func (s *Service) Delete(ctx context.Context, id, name string) error {
 	return nil
 }
 
-func (s *Service) Pull(ctx context.Context, id, name string) (Info, error) {
+func (s *Service) Pull(ctx context.Context, id, name string, auth *runtime.AuthConfig) (Info, error) {
 	log := ctrl.LoggerFrom(ctx)
 
 	info, err := s.status(ctx, name)
@@ -74,6 +74,7 @@ func (s *Service) Pull(ctx context.Context, id, name string) (Info, error) {
 				Image: &runtime.ImageSpec{
 					Image: name,
 				},
+				Auth: auth,
 			})
 			if perr != nil {
 				return Info{}, perr

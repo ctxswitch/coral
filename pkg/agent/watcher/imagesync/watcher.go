@@ -6,7 +6,11 @@ import (
 	coralv1beta1 "ctx.sh/coral/pkg/apis/coral.ctx.sh/v1beta1"
 	"ctx.sh/coral/pkg/queue"
 	"golang.org/x/sync/errgroup"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
+	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
+	"k8s.io/kubernetes/pkg/credentialprovider"
+	"k8s.io/kubernetes/pkg/credentialprovider/secrets"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -27,6 +31,10 @@ type Watcher struct {
 	workQueue   *queue.Queue
 	nodeName    string
 	imageClient image.ImageClient
+	authMap     map[types.NamespacedName][]*runtime.AuthConfig
+	// TODO: this is now a global keyring, do we need to scope this to the
+	//   imagesync resource?
+	keyring credentialprovider.DockerKeyring
 
 	client.Client
 }
@@ -36,6 +44,7 @@ func SetupWithManager(mgr ctrl.Manager, opts *Options) error {
 		workQueue:   opts.WorkQueue,
 		nodeName:    opts.NodeName,
 		imageClient: opts.ImageClient,
+		authMap:     make(map[types.NamespacedName][]*runtime.AuthConfig),
 
 		Client: mgr.GetClient(),
 	}
@@ -56,7 +65,9 @@ func SetupWithManager(mgr ctrl.Manager, opts *Options) error {
 		Complete(w)
 }
 
+// +kubebuilder:rbac:groups=coral.ctx.sh,resources=imagesyncs,verbs=get;list;watch
 // +kubebuilder:rbac:groups=core,resources=nodes,verbs=get;list;watch;update;patch
+// +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch
 
 func (w *Watcher) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := ctrl.LoggerFrom(ctx)
@@ -94,8 +105,21 @@ func (w *Watcher) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result,
 		}
 		return ctrl.Result{}, nil
 	} else {
+		pullSecrets, err := getPullSecrets(ctx, w.Client, isync)
+		if err != nil {
+			log.Error(err, "failed to get pull secrets")
+			return ctrl.Result{}, err
+		}
+
+		defaultKeyring := credentialprovider.NewDockerKeyring()
+
+		keyring, err := secrets.MakeDockerKeyring(pullSecrets, defaultKeyring)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+
 		log.V(2).Info("processing imagesync")
-		if err := w.add(ctx, isync); err != nil {
+		if err := w.add(ctx, isync, keyring); err != nil {
 			log.Error(err, "failed to delete imagesync")
 			return ctrl.Result{}, err
 		}
@@ -104,7 +128,7 @@ func (w *Watcher) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result,
 	return ctrl.Result{}, nil
 }
 
-func (w *Watcher) add(ctx context.Context, obj *coralv1beta1.ImageSync) error {
+func (w *Watcher) add(ctx context.Context, obj *coralv1beta1.ImageSync, keyring credentialprovider.DockerKeyring) error {
 	eg, ctx := errgroup.WithContext(ctx)
 
 	uid := string(obj.GetUID())
@@ -114,7 +138,8 @@ func (w *Watcher) add(ctx context.Context, obj *coralv1beta1.ImageSync) error {
 			w.workQueue.Acquire()
 			defer w.workQueue.Release()
 
-			return w.imageClient.Pull(ctx, uid, img.Image, img.Reference)
+			auth := w.runtimeAuthLookup(img.Image, keyring)
+			return w.imageClient.Pull(ctx, uid, img.Image, img.Reference, auth)
 		})
 	}
 
@@ -152,4 +177,54 @@ func (w *Watcher) filter(ctx context.Context, obj *coralv1beta1.ImageSync) []ctr
 		}}
 	}
 	return []ctrl.Request{}
+}
+
+// TODO: I think I need to pull this up to the watcher.  We don't access k8s resources here.
+func (w *Watcher) authLookup(name string, keyring credentialprovider.DockerKeyring) []credentialprovider.AuthConfig {
+	auth, found := keyring.Lookup(name)
+	if !found {
+		return []credentialprovider.AuthConfig{}
+	}
+
+	return auth
+}
+
+func (w *Watcher) runtimeAuthLookup(name string, keyring credentialprovider.DockerKeyring) []*runtime.AuthConfig {
+	// TODO: should probably cache this, but for now, it's not super expensive.
+	auth := w.authLookup(name, keyring)
+	runtimeAuth := make([]*runtime.AuthConfig, len(auth))
+	for i, v := range auth {
+		runtimeAuth[i] = &runtime.AuthConfig{
+			Username:      v.Username,
+			Password:      v.Password,
+			Auth:          v.Auth,
+			ServerAddress: v.ServerAddress,
+			IdentityToken: v.IdentityToken,
+			RegistryToken: v.RegistryToken,
+		}
+	}
+
+	return runtimeAuth
+}
+
+func getPullSecrets(ctx context.Context, c client.Client, isync *coralv1beta1.ImageSync) ([]corev1.Secret, error) {
+	all := make([]corev1.Secret, 0)
+
+	pullSecrets := isync.Spec.ImagePullSecrets
+
+	if pullSecrets == nil {
+		return []corev1.Secret{}, nil
+	}
+
+	for _, s := range pullSecrets {
+		secret := &corev1.Secret{}
+		err := c.Get(ctx, client.ObjectKey{Name: s.Name, Namespace: isync.GetNamespace()}, secret)
+		if err != nil {
+			return []corev1.Secret{}, err
+		}
+
+		all = append(all, *secret.DeepCopy())
+	}
+
+	return all, nil
 }
