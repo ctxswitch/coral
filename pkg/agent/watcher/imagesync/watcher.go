@@ -2,11 +2,15 @@ package imagesync
 
 import (
 	"context"
+	"errors"
+	"strings"
+	"sync"
+	"time"
+
 	"ctx.sh/coral/pkg/agent/image"
 	coralv1beta1 "ctx.sh/coral/pkg/apis/coral.ctx.sh/v1beta1"
 	"ctx.sh/coral/pkg/queue"
 	"ctx.sh/coral/pkg/util"
-	"errors"
 	"golang.org/x/sync/errgroup"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -18,9 +22,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-	"strings"
-	"sync"
-	"time"
 )
 
 const (
@@ -114,7 +115,8 @@ func (w *Watcher) Reconcile(ctx context.Context, req Request) (ctrl.Result, erro
 
 	err := observer.observe(ctx, observed)
 	if err != nil {
-		if errors.Is(err, ErrNodeMatch) {
+		switch {
+		case errors.Is(err, ErrNodeMatch):
 			// Node doesn't match, ensure that we've cleaned up any labels in case the
 			// selectors were changed.
 			if w.collection.HasUID(string(observed.ImageSync.GetUID())) {
@@ -122,9 +124,9 @@ func (w *Watcher) Reconcile(ctx context.Context, req Request) (ctrl.Result, erro
 			}
 
 			return ctrl.Result{}, nil
-		} else if errors.Is(err, ErrImageSyncNotFound) {
+		case errors.Is(err, ErrImageSyncNotFound):
 			return ctrl.Result{}, nil
-		} else {
+		default:
 			log.Error(err, "unable to observe state", "request", req)
 			return ctrl.Result{}, err
 		}
@@ -133,13 +135,12 @@ func (w *Watcher) Reconcile(ctx context.Context, req Request) (ctrl.Result, erro
 	// Handle the images that are being deleted.
 	if !observed.ImageSync.DeletionTimestamp.IsZero() {
 		log.V(2).Info("imagesync is being deleted, cleaning up")
-		err := w.delete(ctx, observed.ImageSync)
-		if err != nil {
-			log.Error(err, "failed to delete imagesync")
+		if derr := w.delete(ctx, observed.ImageSync); derr != nil {
+			log.Error(derr, "failed to delete imagesync")
 			// TODO: update the labels regardless of the errors, but still handle the error.
 			return ctrl.Result{}, err
 		}
-		return ctrl.Result{}, w.updateLabels(ctx, observed.ImageSync)
+		return ctrl.Result{}, w.updateLabels(ctx)
 	}
 
 	auth, err := NewAuth(observed.PullSecrets)
@@ -158,7 +159,7 @@ func (w *Watcher) Reconcile(ctx context.Context, req Request) (ctrl.Result, erro
 	w.locker.Lock()
 	defer w.locker.Unlock()
 
-	return ctrl.Result{}, w.updateLabels(ctx, observed.ImageSync)
+	return ctrl.Result{}, w.updateLabels(ctx)
 }
 
 func (w *Watcher) add(ctx context.Context, obj *coralv1beta1.ImageSync, auth *Auth) error {
@@ -210,11 +211,8 @@ func (w *Watcher) delete(ctx context.Context, obj *coralv1beta1.ImageSync) error
 	return eg.Wait()
 }
 
-// We could get images from the collection and update all the labels...
-// 1. Filter out all of the imagesync labels.
-// 2. Go over all the collection, get the images.
-// 3. Compare them with images on the node and add the images
-func (w *Watcher) updateLabels(ctx context.Context, obj *coralv1beta1.ImageSync) error {
+// 3. Compare them with images on the node and add the images.
+func (w *Watcher) updateLabels(ctx context.Context) error {
 	node := new(corev1.Node)
 	if err := w.Get(ctx, client.ObjectKey{Name: w.nodeName}, node); err != nil {
 		return err
@@ -224,7 +222,7 @@ func (w *Watcher) updateLabels(ctx context.Context, obj *coralv1beta1.ImageSync)
 
 	// Remove the imagesync labels.
 	labels := node.GetLabels()
-	for k, _ := range labels {
+	for k := range labels {
 		if strings.Contains(k, coralv1beta1.ImageSyncLabel) {
 			delete(labels, k)
 		}

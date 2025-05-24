@@ -2,12 +2,13 @@ package imagesync
 
 import (
 	"context"
+	"time"
+
 	coralv1beta1 "ctx.sh/coral/pkg/apis/coral.ctx.sh/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"time"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 

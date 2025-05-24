@@ -2,13 +2,14 @@ package imagesync
 
 import (
 	"context"
+	"time"
+
 	coralv1beta1 "ctx.sh/coral/pkg/apis/coral.ctx.sh/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"time"
 )
 
 type ObservedState struct {
@@ -112,7 +113,6 @@ func (o *StateObserver) observePullSecrets(ctx context.Context, observed *Observ
 	}
 
 	return observedPullSecrets, nil
-
 }
 
 func (o *StateObserver) observeNode(ctx context.Context) (*corev1.Node, error) {

@@ -75,12 +75,12 @@ func (c *References) References(name, digest string) int {
 func (c *References) ToImageList() []string {
 	seen := make(map[string]bool)
 
-	for k, _ := range c.refs {
+	for k := range c.refs {
 		seen[k.Image] = true
 	}
 
 	images := make([]string, 0)
-	for k, _ := range seen {
+	for k := range seen {
 		images = append(images, k)
 	}
 
@@ -90,7 +90,7 @@ func (c *References) ToImageList() []string {
 func (c *References) HasUID(uid string) bool {
 	seen := make(map[string]bool)
 
-	for k, _ := range c.refs {
+	for k := range c.refs {
 		seen[k.Image] = true
 	}
 

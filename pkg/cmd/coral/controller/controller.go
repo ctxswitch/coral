@@ -16,9 +16,10 @@ package controller
 
 import (
 	"crypto/tls"
-	"ctx.sh/coral/pkg/controller/imagesync"
 	"os"
 	"sync"
+
+	"ctx.sh/coral/pkg/controller/imagesync"
 
 	coralv1beta1 "ctx.sh/coral/pkg/apis/coral.ctx.sh/v1beta1"
 	"ctx.sh/coral/pkg/controller"
@@ -113,8 +114,8 @@ func (c *Controller) RunE(cmd *cobra.Command, args []string) error {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := statusUpdater.Start(ctx); err != nil {
-			log.Error(err, "failed to start status updater")
+		if gerr := statusUpdater.Start(ctx); gerr != nil {
+			log.Error(gerr, "failed to start status updater")
 			os.Exit(1)
 		}
 	}()

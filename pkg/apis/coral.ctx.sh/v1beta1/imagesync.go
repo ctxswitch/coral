@@ -23,24 +23,6 @@ func (i *ImageSync) GetRevisionHash() string {
 	return fmt.Sprintf("%x", hasher.Sum(nil))
 }
 
-func (i *ImageSync) IsProcessed() bool {
-	v, ok := i.GetLabels()[ProcessedLabelName]
-	if ok && v == ProcessedLabelValue {
-		return true
-	}
-
-	return false
-}
-
-func (i *ImageSync) SetProcessed() {
-	labels := i.GetLabels()
-	if labels == nil {
-		labels = map[string]string{}
-	}
-	labels[ProcessedLabelName] = ProcessedLabelValue
-	i.SetLabels(labels)
-}
-
 func (i *ImageSync) HasChanged() bool {
 	return i.Status.Revision != i.GetRevisionHash()
 }

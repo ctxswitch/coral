@@ -2,6 +2,9 @@ package image
 
 import (
 	"context"
+	"sync"
+	"time"
+
 	iutil "ctx.sh/coral/pkg/util"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -9,8 +12,6 @@ import (
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/cri-client/pkg/util"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sync"
-	"time"
 )
 
 const (
@@ -128,7 +129,7 @@ func (c *Client) pull(ctx context.Context, name string, auth *runtime.AuthConfig
 		Auth: auth,
 	})
 
-	return
+	return err
 }
 
 func (c *Client) status(ctx context.Context, name string) (Info, error) {

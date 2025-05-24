@@ -158,11 +158,6 @@ func (c *Controller) generateImageLabelMap(_ context.Context, imageSync *coralv1
 	return images
 }
 
-func (c *Controller) update(ctx context.Context, isync *coralv1beta1.ImageSync) error {
-	isync.SetProcessed()
-	return c.Update(ctx, isync)
-}
-
 func (c *Controller) updateStatus(ctx context.Context, isync *coralv1beta1.ImageSync) error {
 	isync.Status.Images = c.generateImageLabelMap(ctx, isync)
 	isync.Status.Revision = isync.GetRevisionHash()
