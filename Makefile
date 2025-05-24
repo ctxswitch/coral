@@ -5,7 +5,7 @@ export PATH := ./bin:$(PATH)
 
 CONTROLLER_TOOLS_VERSION ?= v0.16.1
 KUSTOMIZE_VERSION ?= v5.4.2
-GOLANGCI_LINT_VERSION ?= v1.63.4
+GOLANGCI_LINT_VERSION ?= v2.1.6
 GOIMPORTS_VERSION ?= latest
 ADDLICENSE_VERSION ?= v1.0.0
 BUF_VERSION ?= latest
@@ -128,7 +128,7 @@ $(KUSTOMIZE):
 
 $(GOLANGCI_LINT): $(LOCALBIN)
 	@test -s $(GOLANGCI_LINT) || \
-	GOBIN=$(LOCALBIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@${GOLANGCI_LINT_VERSION}
+	GOBIN=$(LOCALBIN) go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@${GOLANGCI_LINT_VERSION}
 
 $(GOIMPORTS): $(LOCALBIN)
 	@test -s $(GOIMPORTS) || \
@@ -187,7 +187,7 @@ localdev-clean:
 .PHONY: controller-run
 controller-run:
 	$(eval POD := $(shell kubectl get pods -n coral-system -l app=controller -o=custom-columns=:metadata.name --no-headers))
-	@$(KUBECTL) exec -n coral-system -it pod/$(POD) -- bash -c "go run pkg/cmd/coral/*.go controller --log-level=6 --skip-insecure-verify=true"
+	@$(KUBECTL) exec -n coral-system -it pod/$(POD) -- bash -c "go run pkg/cmd/coral/*.go controller --log-level=5 --skip-insecure-verify=true"
 
 .PHONY: controller-exec
 controller-exec:
@@ -197,7 +197,7 @@ controller-exec:
 .PHONY: agent-run
 agent-run:
 	$(eval POD := $(shell kubectl get pods -n coral-system -l app=agent -o=custom-columns=:metadata.name --no-headers))
-	@$(KUBECTL) exec -n coral-system -it pod/$(POD) -- bash -c "go run pkg/cmd/coral/*.go agent --log-level=6"
+	@$(KUBECTL) exec -n coral-system -it pod/$(POD) -- bash -c "go run pkg/cmd/coral/*.go agent --log-level=5"
 
 .PHONY: agent-exec
 agent-exec:

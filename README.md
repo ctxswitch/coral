@@ -15,7 +15,7 @@ Over time, we expect to add additional features to Coral including:
 - [ ] A build system (most likely leveraging kaniko) that builds and stores to internal registries allowing users to bypass external registries all together.
 - [ ] Registry mirroring and cross-cluster image synchronization.
 - [ ] Additional garbage collection and lifecycle management features for container images on both the nodes and internal registries.
- 
+
 ## Installation
 
 TODO

@@ -35,14 +35,13 @@ spec:
             runAsUser: 0
             runAsGroup: 0
             runAsNonRoot: false
-            capabilities:
-              add: [ "SETFCAP" ]
           ports:
             - containerPort: 9090
           volumeMounts:
-            - name: varrun
-              mountPath: "/kubelet"
+            - name: containerd
+              mountPath: "/run/containerd"
       volumes:
-        - name: varrun
+        # TODO: Fix me before release
+        - name: containerd
           hostPath:
-            path: /var/run
+            path: /run/k3s/containerd

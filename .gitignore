@@ -23,6 +23,7 @@ go.work
 
 bin/
 tmp/
+dist/
 
 # Test certs
 config/overlays/dev/tls.*
