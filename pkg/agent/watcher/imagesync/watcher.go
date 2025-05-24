@@ -5,19 +5,20 @@ import (
 	"ctx.sh/coral/pkg/agent/image"
 	coralv1beta1 "ctx.sh/coral/pkg/apis/coral.ctx.sh/v1beta1"
 	"ctx.sh/coral/pkg/queue"
+	"ctx.sh/coral/pkg/util"
 	"errors"
 	"golang.org/x/sync/errgroup"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/workqueue"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+	"strings"
 	"sync"
 	"time"
 )
@@ -32,6 +33,10 @@ type Options struct {
 	MaxConcurrentPullers     int
 	MaxConcurrentReconcilers int
 	NodeName                 string
+}
+
+type Request struct {
+	types.NamespacedName
 }
 
 type Watcher struct {
@@ -53,33 +58,43 @@ func SetupWithManager(mgr ctrl.Manager, opts *Options) error {
 		Client: mgr.GetClient(),
 	}
 
-	src := source.Kind(
-		mgr.GetCache(),
-		&coralv1beta1.ImageSync{},
-		handler.TypedFuncs[*coralv1beta1.ImageSync, reconcile.Request]{
-			UpdateFunc: func(ctx context.Context, e event.TypedUpdateEvent[*coralv1beta1.ImageSync], q workqueue.TypedRateLimitingInterface[reconcile.Request]) {
-				log := ctrl.LoggerFrom(ctx)
-				if e.ObjectNew.IsProcessed() {
-					log.V(4).Info("update added request to queue", "object", e.ObjectNew)
-					q.Add(reconcile.Request{NamespacedName: types.NamespacedName{
-						Name:      e.ObjectNew.Name,
-						Namespace: e.ObjectNew.Namespace,
-					}})
-				}
-			},
-			CreateFunc:  nil,
-			DeleteFunc:  nil,
-			GenericFunc: nil,
+	h := handler.TypedFuncs[*coralv1beta1.ImageSync, Request]{
+		CreateFunc: func(ctx context.Context, e event.TypedCreateEvent[*coralv1beta1.ImageSync], w workqueue.TypedRateLimitingInterface[Request]) {
+			// Do nothing
 		},
-	)
+		UpdateFunc: func(ctx context.Context, e event.TypedUpdateEvent[*coralv1beta1.ImageSync], w workqueue.TypedRateLimitingInterface[Request]) {
+			obj := e.ObjectNew
+			if len(obj.Status.Images) > 0 {
+				w.Add(Request{
+					NamespacedName: types.NamespacedName{
+						Name:      obj.GetName(),
+						Namespace: obj.GetNamespace(),
+					},
+				})
+			}
+		},
+		DeleteFunc: func(ctx context.Context, e event.TypedDeleteEvent[*coralv1beta1.ImageSync], w workqueue.TypedRateLimitingInterface[Request]) {
+			obj := e.Object
+			w.Add(Request{
+				NamespacedName: types.NamespacedName{
+					Name:      obj.GetName(),
+					Namespace: obj.GetNamespace(),
+				},
+			})
+		},
+		GenericFunc: func(ctx context.Context, e event.TypedGenericEvent[*coralv1beta1.ImageSync], w workqueue.TypedRateLimitingInterface[Request]) {
+			// Do nothing
+		},
+	}
 
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&coralv1beta1.ImageSync{}).
-		WatchesRawSource(src).
+	return builder.TypedControllerManagedBy[Request](mgr).
+		WatchesRawSource(source.TypedKind(
+			mgr.GetCache(),
+			&coralv1beta1.ImageSync{},
+			h),
+		).
 		WithEventFilter(predicate.GenerationChangedPredicate{}).
-		WithOptions(controller.Options{
-			MaxConcurrentReconciles: opts.MaxConcurrentReconcilers,
-		}).
+		Named("imagesync-watcher").
 		Complete(w)
 }
 
@@ -87,8 +102,8 @@ func SetupWithManager(mgr ctrl.Manager, opts *Options) error {
 // +kubebuilder:rbac:groups=core,resources=nodes,verbs=get;list;watch;update;patch
 // +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch
 
-func (w *Watcher) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := ctrl.LoggerFrom(ctx)
+func (w *Watcher) Reconcile(ctx context.Context, req Request) (ctrl.Result, error) {
+	log := ctrl.LoggerFrom(ctx, "name", req.Name, "namespace", req.Namespace)
 
 	observed := NewObservedState()
 	observer := StateObserver{
@@ -99,15 +114,15 @@ func (w *Watcher) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result,
 
 	err := observer.observe(ctx, observed)
 	if err != nil {
-		// TODO: I still don't know if I like handling this as an error.
 		if errors.Is(err, ErrNodeMatch) {
-			// TODO: Cleanup handler. Ensure cleanup in case the node selectors have changed and we
-			//   no longer match.  It's pretty brute force right now.  Need a reference map to check.
-			return ctrl.Result{}, w.delete(ctx, observed.ImageSync)
+			// Node doesn't match, ensure that we've cleaned up any labels in case the
+			// selectors were changed.
+			if w.collection.HasUID(string(observed.ImageSync.GetUID())) {
+				return ctrl.Result{}, w.delete(ctx, observed.ImageSync)
+			}
+
+			return ctrl.Result{}, nil
 		} else if errors.Is(err, ErrImageSyncNotFound) {
-			// The resource has been deleted.
-			// TODO: There's a chance that we haven't cleaned up labels so the node may actually
-			//   get into a state where we have orphaned labels that may represent a stale state.
 			return ctrl.Result{}, nil
 		} else {
 			log.Error(err, "unable to observe state", "request", req)
@@ -195,27 +210,31 @@ func (w *Watcher) delete(ctx context.Context, obj *coralv1beta1.ImageSync) error
 	return eg.Wait()
 }
 
+// We could get images from the collection and update all the labels...
+// 1. Filter out all of the imagesync labels.
+// 2. Go over all the collection, get the images.
+// 3. Compare them with images on the node and add the images
 func (w *Watcher) updateLabels(ctx context.Context, obj *coralv1beta1.ImageSync) error {
 	node := new(corev1.Node)
 	if err := w.Get(ctx, client.ObjectKey{Name: w.nodeName}, node); err != nil {
 		return err
 	}
 
-	labels := node.GetLabels()
-
 	node = node.DeepCopy()
-	for _, img := range obj.Status.Images {
-		// TODO: make sure this doesn't return error for not found.
-		info, err := w.imageClient.Status(ctx, img.Image)
-		if err != nil {
-			return err
-		}
 
-		if w.collection.IsReferenced(info.Name, info.ID) {
-			labels[coralv1beta1.ImageSyncLabel+"/"+img.Reference] = "present"
-		} else {
-			delete(labels, coralv1beta1.ImageSyncLabel+"/"+img.Reference)
+	// Remove the imagesync labels.
+	labels := node.GetLabels()
+	for k, _ := range labels {
+		if strings.Contains(k, coralv1beta1.ImageSyncLabel) {
+			delete(labels, k)
 		}
+	}
+
+	// Get all of the unique images in the reference collection and add them.
+	for _, img := range w.collection.ToImageList() {
+		fqn := util.GetImageQualifiedName(util.DefaultSearchRegistry, img)
+		ref := util.GetImageLabelValue(fqn)
+		labels[coralv1beta1.ImageSyncLabel+"/"+ref] = "present"
 	}
 
 	node.SetLabels(labels)

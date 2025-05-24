@@ -72,6 +72,32 @@ func (c *References) References(name, digest string) int {
 	return c.images[name].References(digest)
 }
 
+func (c *References) ToImageList() []string {
+	seen := make(map[string]bool)
+
+	for k, _ := range c.refs {
+		seen[k.Image] = true
+	}
+
+	images := make([]string, 0)
+	for k, _ := range seen {
+		images = append(images, k)
+	}
+
+	return images
+}
+
+func (c *References) HasUID(uid string) bool {
+	seen := make(map[string]bool)
+
+	for k, _ := range c.refs {
+		seen[k.Image] = true
+	}
+
+	_, ok := seen[uid]
+	return ok
+}
+
 func (c *References) addResourceRef(uuid, name, digest string) (string, bool) {
 	key := Key{
 		UUID:  uuid,

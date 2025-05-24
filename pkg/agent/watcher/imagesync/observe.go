@@ -30,7 +30,7 @@ func NewObservedState() *ObservedState {
 type StateObserver struct {
 	Client   client.Client
 	NodeName string
-	Request  ctrl.Request
+	Request  Request
 }
 
 func (o *StateObserver) observe(ctx context.Context, observed *ObservedState) error {

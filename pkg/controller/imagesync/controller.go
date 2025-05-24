@@ -111,11 +111,6 @@ func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{}, err
 	}
 
-	if err := c.update(ctx, isync); err != nil {
-		logger.Error(err, "unable to update imagesync status", "request", req)
-		return ctrl.Result{}, err
-	}
-
 	return ctrl.Result{}, nil
 }
 
@@ -126,25 +121,6 @@ func (c *Controller) addFinalizer(ctx context.Context, isync *coralv1beta1.Image
 	}
 
 	return nil
-}
-
-func (c *Controller) finalize(ctx context.Context, isync *coralv1beta1.ImageSync) error {
-	// TODO: Add finalizer logic here
-	return nil
-}
-
-func (c *Controller) generateImageLabelMap(_ context.Context, imageSync *coralv1beta1.ImageSync) []coralv1beta1.ImageSyncImage {
-	images := make([]coralv1beta1.ImageSyncImage, 0)
-	for _, image := range imageSync.Spec.Images {
-		fqn := util.GetImageQualifiedName(util.DefaultSearchRegistry, image)
-		checksum := util.GetImageLabelValue(fqn)
-		images = append(images, coralv1beta1.ImageSyncImage{
-			Name:      image,
-			Image:     fqn,
-			Reference: checksum,
-		})
-	}
-	return images
 }
 
 func (c *Controller) removeFinalizer(ctx context.Context, isync *coralv1beta1.ImageSync) error {
@@ -160,6 +136,26 @@ func (c *Controller) removeFinalizer(ctx context.Context, isync *coralv1beta1.Im
 	}
 
 	return nil
+}
+
+func (c *Controller) finalize(ctx context.Context, isync *coralv1beta1.ImageSync) error {
+	// TODO: I'm not currently using the finalizers, but it does trigger an update event
+	//   with the deletion time set that the agents can catch for cleanup.
+	return nil
+}
+
+func (c *Controller) generateImageLabelMap(_ context.Context, imageSync *coralv1beta1.ImageSync) []coralv1beta1.ImageSyncImage {
+	images := make([]coralv1beta1.ImageSyncImage, 0)
+	for _, image := range imageSync.Spec.Images {
+		fqn := util.GetImageQualifiedName(util.DefaultSearchRegistry, image)
+		ref := util.GetImageLabelValue(fqn)
+		images = append(images, coralv1beta1.ImageSyncImage{
+			Name:      image,
+			Image:     fqn,
+			Reference: ref,
+		})
+	}
+	return images
 }
 
 func (c *Controller) update(ctx context.Context, isync *coralv1beta1.ImageSync) error {
