@@ -3,27 +3,27 @@ package imagesync
 import (
 	"sync"
 
-	"ctx.sh/coral/pkg/agent/store"
+	"ctx.sh/coral/pkg/store"
 )
 
-// Collection is a collection of images that are under management.  They are
+// References is a collection of images that are under management.  They are
 // referenced by the image name and the digest of the image.
-// Collection [name]->[[digest]] -> [count]].
-type Collection struct {
+// References [name]->[[digest]] -> [count]].
+type References struct {
 	images map[Name]*store.Store[Digest]
 	refs   map[Key]Digest
 
 	sync.Mutex
 }
 
-func NewCollection() *Collection {
-	return &Collection{
+func NewReferences() *References {
+	return &References{
 		images: make(map[Name]*store.Store[Digest]),
 		refs:   make(map[Key]Digest),
 	}
 }
 
-func (c *Collection) Add(uuid, name, digest string) {
+func (c *References) Add(uuid, name, digest string) {
 	c.Lock()
 	defer c.Unlock()
 
@@ -44,7 +44,7 @@ func (c *Collection) Add(uuid, name, digest string) {
 	c.images[name].Add(digest)
 }
 
-func (c *Collection) Remove(uuid, name, digest string) {
+func (c *References) Remove(uuid, name, digest string) {
 	c.Lock()
 	defer c.Unlock()
 
@@ -56,7 +56,7 @@ func (c *Collection) Remove(uuid, name, digest string) {
 	c.removeResourceRef(uuid, name)
 }
 
-func (c *Collection) IsReferenced(name string, digest string) bool {
+func (c *References) IsReferenced(name string, digest string) bool {
 	if _, ok := c.images[name]; !ok {
 		return false
 	}
@@ -64,7 +64,7 @@ func (c *Collection) IsReferenced(name string, digest string) bool {
 	return c.images[name].IsReferenced(digest)
 }
 
-func (c *Collection) References(name, digest string) int {
+func (c *References) References(name, digest string) int {
 	if _, ok := c.images[name]; !ok {
 		return 0
 	}
@@ -72,7 +72,7 @@ func (c *Collection) References(name, digest string) int {
 	return c.images[name].References(digest)
 }
 
-func (c *Collection) addResourceRef(uuid, name, digest string) (string, bool) {
+func (c *References) addResourceRef(uuid, name, digest string) (string, bool) {
 	key := Key{
 		UUID:  uuid,
 		Image: name,
@@ -86,7 +86,7 @@ func (c *Collection) addResourceRef(uuid, name, digest string) (string, bool) {
 	}
 }
 
-func (c *Collection) removeResourceRef(uuid, name string) {
+func (c *References) removeResourceRef(uuid, name string) {
 	key := Key{
 		UUID:  uuid,
 		Image: name,

@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCollection_Add(t *testing.T) {
-	c := NewCollection()
+func TestReferences(t *testing.T) {
+	c := NewReferences()
 	c.Add("uuid1", "name1", "digest1")
 	assert.Equal(t, 1, c.images["name1"].References("digest1"))
 

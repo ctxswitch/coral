@@ -39,7 +39,7 @@ type Watcher struct {
 	nodeName    string
 	imageClient image.ImageClient
 	locker      sync.Mutex
-	collection  *Collection
+	collection  *References
 	client.Client
 }
 
@@ -48,7 +48,7 @@ func SetupWithManager(mgr ctrl.Manager, opts *Options) error {
 		workQueue:   opts.WorkQueue,
 		nodeName:    opts.NodeName,
 		imageClient: opts.ImageClient,
-		collection:  NewCollection(),
+		collection:  NewReferences(),
 
 		Client: mgr.GetClient(),
 	}
