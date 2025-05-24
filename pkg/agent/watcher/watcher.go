@@ -19,7 +19,7 @@ type Options struct {
 type Watcher struct{}
 
 func SetupWithManager(ctx context.Context, mgr ctrl.Manager, opts *Options) error {
-	imageClient := image.New(mgr.GetClient(), opts.NodeName)
+	imageClient := image.New()
 	if err := imageClient.Connect(ctx, opts.ContainerAddr); err != nil {
 		return err
 	}

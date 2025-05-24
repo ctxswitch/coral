@@ -10,7 +10,7 @@ func (e ImageError) Error() string {
 
 const (
 	ErrNotFound     ImageError = "not found"
-	ErrNodeNotReady ImageError = "node is not ready"
+	ErrUnauthorized ImageError = "unauthorized"
 )
 
 func IsNotFound(err error) bool {

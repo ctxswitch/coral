@@ -2,124 +2,159 @@ package image
 
 import (
 	"context"
+	iutil "ctx.sh/coral/pkg/util"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	crun "k8s.io/cri-api/pkg/apis/runtime/v1"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
+	"k8s.io/cri-client/pkg/util"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sync"
+	"time"
+)
 
-	coralv1beta1 "ctx.sh/coral/pkg/apis/coral.ctx.sh/v1beta1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+const (
+	ConnectionTimeout  time.Duration = 30 * time.Second
+	MaxCallRecvMsgSize int           = 1024 * 1024 * 32
 )
 
 type Client struct {
-	name      string
-	node      *Node
-	service   *Service
 	authCache map[string]*runtime.AuthConfig
+	isc       runtime.ImageServiceClient
+	rsc       runtime.RuntimeServiceClient
 
 	sync.Mutex
 }
 
-func New(c client.Client, name string) *Client {
+func New() *Client {
 	return &Client{
-		name: name,
-		node: NewNode(&NodeOptions{
-			Client: c,
-			Name:   name,
-		}),
-		service:   NewService(),
 		authCache: make(map[string]*runtime.AuthConfig),
 	}
 }
 
 func (c *Client) Connect(ctx context.Context, addr string) error {
-	return c.service.Connect(ctx, addr)
+	log := ctrl.LoggerFrom(ctx)
+
+	addr, dialer, err := util.GetAddressAndDialer(addr)
+	if err != nil {
+		log.Error(err, "get container runtime address failed")
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, ConnectionTimeout)
+	defer cancel()
+
+	conn, err := grpc.DialContext( // nolint:staticcheck
+		ctx,
+		addr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithAuthority("localhost"),
+		grpc.WithContextDialer(dialer),
+		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(MaxCallRecvMsgSize)),
+	)
+	if err != nil {
+		log.Error(err, "connect remote image service failed", "address", addr)
+		return err
+	}
+
+	c.isc = crun.NewImageServiceClient(conn)
+	c.rsc = crun.NewRuntimeServiceClient(conn)
+
+	return nil
 }
 
-func (c *Client) Pull(ctx context.Context, id, name, ref string, auth []*runtime.AuthConfig) error {
-	c.Lock()
-	defer c.Unlock()
-
-	log := ctrl.LoggerFrom(ctx, "image", name, "ref", ref)
-
-	if !c.node.IsReady(ctx) {
-		return ErrNodeNotReady
-	}
+func (c *Client) Pull(ctx context.Context, uid, name string, auth []*runtime.AuthConfig) (Info, error) {
+	log := ctrl.LoggerFrom(ctx, "image", name)
 
 	if len(auth) == 0 {
-		return c.pull(ctx, id, name, ref, nil)
+		err := c.pull(ctx, name, nil)
+		if err != nil {
+			return Info{}, err
+		}
+		return c.status(ctx, name)
 	}
 
-	if auth, ok := c.authCache[id]; ok {
-		err := c.pull(ctx, id, name, ref, auth)
-		if err != nil {
-			log.V(4).Info("failed to pull image with cached credentials")
-			delete(c.authCache, id)
+	if auth, ok := c.authCache[uid]; ok {
+		err := c.pull(ctx, name, auth)
+		if err == nil {
+			return c.status(ctx, name)
 		}
 
-		return err
+		log.V(4).Info("failed to pull image with cached credentials")
+		delete(c.authCache, uid)
 	}
 
 	for _, a := range auth {
 		log.V(4).Info("attempting to pull image with provided credentials")
-		err := c.pull(ctx, id, name, ref, a)
+		err := c.pull(ctx, name, a)
 		if err != nil {
 			continue
 		} else {
-			c.authCache[id] = a
-			return nil
+			c.authCache[uid] = a
+			return c.status(ctx, name)
 		}
 	}
 
 	log.Error(nil, "failed to pull image with provided credentials", "image", name)
-	return nil
+	return Info{}, ErrUnauthorized
 }
 
-func (c *Client) Delete(ctx context.Context, id, name, ref string) error {
+func (c *Client) Delete(ctx context.Context, uid, name string) (Info, error) {
+	info, err := c.status(ctx, name)
+	if err != nil {
+		if IsNotFound(err) {
+			return Info{}, ErrNotFound
+		} else {
+			return Info{}, err
+		}
+	}
+
+	delete(c.authCache, uid)
+	return info, nil
+}
+
+func (c *Client) Status(ctx context.Context, name string) (Info, error) {
+	return c.status(ctx, name)
+}
+
+func (c *Client) pull(ctx context.Context, name string, auth *runtime.AuthConfig) (err error) {
 	c.Lock()
 	defer c.Unlock()
 
-	if !c.node.IsReady(ctx) {
-		return ErrNodeNotReady
-	}
+	_, err = c.isc.PullImage(ctx, &runtime.PullImageRequest{
+		Image: &runtime.ImageSpec{
+			Image: name,
+		},
+		Auth: auth,
+	})
 
-	err := c.node.Remove(ctx, name, ref)
-	if err != nil {
-		return err
-	}
-
-	err = c.service.Delete(ctx, id, name)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return
 }
 
-func (c *Client) pull(ctx context.Context, id, name, ref string, auth *runtime.AuthConfig) error {
-	_, err := c.service.Pull(ctx, id, name, auth)
-	if err != nil {
-		return err
-	}
-
-	if err := c.node.Update(ctx, name, ref); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (c *Client) Matches(ctx context.Context, selectors []coralv1beta1.NodeSelector) (bool, error) {
+func (c *Client) status(ctx context.Context, name string) (Info, error) {
 	c.Lock()
 	defer c.Unlock()
 
-	return c.node.Matches(ctx, selectors)
-}
+	fqn := iutil.GetImageQualifiedName(iutil.DefaultSearchRegistry, name)
 
-func (c *Client) Managed(ctx context.Context, id, name string) (bool, error) {
-	c.Lock()
-	defer c.Unlock()
+	resp, err := c.isc.ImageStatus(ctx, &runtime.ImageStatusRequest{
+		Image: &runtime.ImageSpec{
+			Image: fqn,
+		},
+	})
+	if err != nil {
+		return Info{}, err
+	}
 
-	return false, nil
+	if resp.GetImage() == nil {
+		return Info{}, ErrNotFound
+	}
+
+	return Info{
+		ID:   resp.GetImage().GetId(),
+		Name: fqn,
+		Tags: resp.GetImage().GetRepoTags(),
+	}, nil
 }
 
 var _ ImageClient = &Client{}
