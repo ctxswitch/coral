@@ -15,14 +15,12 @@
 package main
 
 const (
-	DefaultCertDir              string = "/etc/webhook/tls"
-	DefaultEnableLeaderElection bool   = false
-	DefaultSkipInsecureVerify   bool   = false
-	DefaultLogLevel             int8   = 4
-	// TODO: change to unix:///run/containerd/containerd.sock
+	DefaultCertDir                  string = "/etc/webhook/tls"
+	DefaultEnableLeaderElection     bool   = false
+	DefaultSkipInsecureVerify       bool   = false
+	DefaultLogLevel                 int8   = 4
 	DefaultContainerdAddr           string = "unix:///run/containerd/containerd.sock"
 	DefaultNamespace                string = ""
-	DefaultScope                    string = ""
 	DefaultMaxConcurrentPullers     int    = 10
 	DefaultMaxConcurrentReconcilers int    = 3
 )

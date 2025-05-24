@@ -62,9 +62,11 @@ func (su *StatusUpdater) Stop() {
 }
 
 func (su *StatusUpdater) update(ctx context.Context) error {
-	// List all imagesyncs.
+	// List all imagesyncs labeled as processed
 	var imagesyncs coralv1beta1.ImageSyncList
-	if err := su.Client.List(ctx, &imagesyncs); err != nil {
+	if err := su.Client.List(ctx, &imagesyncs, client.MatchingLabels{
+		coralv1beta1.ProcessedLabelName: coralv1beta1.ProcessedLabelValue,
+	}); err != nil {
 		return err
 	}
 

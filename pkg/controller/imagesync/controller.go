@@ -103,13 +103,15 @@ func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{}, nil
 	}
 
-	if err := c.update(ctx, isync); err != nil {
+	logger.Info("imagesync has changed, updating", "request", req)
+
+	// Update status first since we use the status blocks to keep track of the label mapping.
+	if err := c.updateStatus(ctx, isync); err != nil {
 		logger.Error(err, "unable to update imagesync status", "request", req)
 		return ctrl.Result{}, err
 	}
 
-	// Update status
-	if err := c.updateStatus(ctx, isync); err != nil {
+	if err := c.update(ctx, isync); err != nil {
 		logger.Error(err, "unable to update imagesync status", "request", req)
 		return ctrl.Result{}, err
 	}

@@ -55,6 +55,8 @@ func (c *Client) Pull(ctx context.Context, id, name, ref string, auth []*runtime
 			log.V(4).Info("failed to pull image with cached credentials")
 			delete(c.authCache, id)
 		}
+
+		return err
 	}
 
 	for _, a := range auth {
