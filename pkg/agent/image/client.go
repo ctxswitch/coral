@@ -9,7 +9,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	crun "k8s.io/cri-api/pkg/apis/runtime/v1"
-	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"k8s.io/cri-client/pkg/util"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
@@ -20,16 +19,16 @@ const (
 )
 
 type Client struct {
-	authCache map[string]*runtime.AuthConfig
-	isc       runtime.ImageServiceClient
-	rsc       runtime.RuntimeServiceClient
+	authCache map[string]*crun.AuthConfig
+	isc       crun.ImageServiceClient
+	rsc       crun.RuntimeServiceClient
 
 	sync.Mutex
 }
 
 func New() *Client {
 	return &Client{
-		authCache: make(map[string]*runtime.AuthConfig),
+		authCache: make(map[string]*crun.AuthConfig),
 	}
 }
 
@@ -64,7 +63,7 @@ func (c *Client) Connect(ctx context.Context, addr string) error {
 	return nil
 }
 
-func (c *Client) Pull(ctx context.Context, uid, name string, auth []*runtime.AuthConfig) (Info, error) {
+func (c *Client) Pull(ctx context.Context, uid, name string, auth []*crun.AuthConfig) (Info, error) {
 	log := ctrl.LoggerFrom(ctx, "image", name)
 
 	if len(auth) == 0 {
@@ -118,12 +117,12 @@ func (c *Client) Status(ctx context.Context, name string) (Info, error) {
 	return c.status(ctx, name)
 }
 
-func (c *Client) pull(ctx context.Context, name string, auth *runtime.AuthConfig) (err error) {
+func (c *Client) pull(ctx context.Context, name string, auth *crun.AuthConfig) (err error) {
 	c.Lock()
 	defer c.Unlock()
 
-	_, err = c.isc.PullImage(ctx, &runtime.PullImageRequest{
-		Image: &runtime.ImageSpec{
+	_, err = c.isc.PullImage(ctx, &crun.PullImageRequest{
+		Image: &crun.ImageSpec{
 			Image: name,
 		},
 		Auth: auth,
@@ -138,8 +137,8 @@ func (c *Client) status(ctx context.Context, name string) (Info, error) {
 
 	fqn := iutil.GetImageQualifiedName(iutil.DefaultSearchRegistry, name)
 
-	resp, err := c.isc.ImageStatus(ctx, &runtime.ImageStatusRequest{
-		Image: &runtime.ImageSpec{
+	resp, err := c.isc.ImageStatus(ctx, &crun.ImageStatusRequest{
+		Image: &crun.ImageSpec{
 			Image: fqn,
 		},
 	})
