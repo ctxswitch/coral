@@ -1,0 +1,22 @@
+apiVersion: coral.ctx.sh/v1beta1
+kind: ImageSync
+metadata:
+  name: example
+  namespace: default
+  uid: b7f01748-4d55-4bc3-939a-a458c19ca533
+  deletionTimestamp: "2025-05-25T23:02:55Z"
+spec:
+  images:
+    - golang:latest
+    - nginx:latest
+status:
+  condition:
+    available: 0
+    pending: 0
+  images:
+    - image: docker.io/library/golang:latest
+      name: golang:latest
+      reference: 7f88bbf3e814bc26c05c719c470303da
+    - image: docker.io/library/nginx:latest
+      name: nginx
+      reference: 819de3aee13d29b3d12a28494ac35519

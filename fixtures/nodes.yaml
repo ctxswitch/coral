@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: Node
+metadata:
+  name: node1
+spec:
+  providerID: kind://docker/coral/node1
+status:
+  conditions:
+    - status: "False"
+      type: MemoryPressure
+    - status: "False"
+      type: DiskPressure
+    - status: "False"
+      type: PIDPressure
+    - status: "True"
+      type: Ready
+  images:
+    - names:
+        - docker.io/library/debian@sha256:a165446a88794db4fec31e35e9441433f9552ae048fb1ed26df352d2b537cb96
+        - docker.io/library/debian:bullseye-slim
+    - names:
+        - docker.io/library/debian@sha256:ccb33c3ac5b02588fc1d9e4fc09b952e433d0c54d8618d0ee1afadf1f3cf2455
+        - docker.io/library/debian:bookworm-slim
+---
+apiVersion: v1
+kind: Node
+metadata:
+  name: node2
+spec:
+  providerID: kind://docker/coral/node2
+status:
+  conditions:
+    - status: "False"
+      type: MemoryPressure
+    - status: "False"
+      type: DiskPressure
+    - status: "False"
+      type: PIDPressure
+    - status: "True"
+      type: Ready
+  images:
+    - names:
+        - docker.io/library/debian@sha256:a165446a88794db4fec31e35e9441433f9552ae048fb1ed26df352d2b537cb96
+        - docker.io/library/debian:bullseye-slim
+    - names:
+        - docker.io/library/debian@sha256:ccb33c3ac5b02588fc1d9e4fc09b952e433d0c54d8618d0ee1afadf1f3cf2455
+        - docker.io/library/debian:bookworm-slim
+---
+apiVersion: v1
+kind: Node
+metadata:
+  name: node3
+spec:
+  providerID: kind://docker/coral/node3
+status:
+  conditions:
+    - status: "False"
+      type: MemoryPressure
+    - status: "False"
+      type: DiskPressure
+    - status: "False"
+      type: PIDPressure
+    - status: "True"
+      type: Ready
+  images:
+    - names:
+        - docker.io/library/debian@sha256:a165446a88794db4fec31e35e9441433f9552ae048fb1ed26df352d2b537cb96
+        - docker.io/library/debian:bullseye-slim
+    - names:
+        - docker.io/library/debian@sha256:ccb33c3ac5b02588fc1d9e4fc09b952e433d0c54d8618d0ee1afadf1f3cf2455
+        - docker.io/library/debian:bookworm-slim

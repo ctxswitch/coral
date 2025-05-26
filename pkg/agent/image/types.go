@@ -3,6 +3,7 @@ package image
 import (
 	"context"
 
+	crun "k8s.io/cri-api/pkg/apis/runtime/v1"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
@@ -22,4 +23,12 @@ type Info struct {
 	Name string
 	// Tags are the tags associated with the image.
 	Tags []string
+}
+
+type ImageServiceClient interface {
+	crun.ImageServiceClient
+}
+
+type RuntimeServiceClient interface {
+	crun.RuntimeServiceClient
 }

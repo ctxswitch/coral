@@ -7,8 +7,9 @@ func (e WatchError) Error() string {
 }
 
 const (
-	ErrNodeNotFound      WatchError = "node not found"
-	ErrNodeNotReady      WatchError = "node not ready"
-	ErrNodeMatch         WatchError = "node does not match match"
-	ErrImageSyncNotFound WatchError = "imagesync notfound"
+	ErrNodeNotFound        WatchError = "node not found"
+	ErrNodeNotReady        WatchError = "node not ready"
+	ErrNodeMatch           WatchError = "node does not match match"
+	ErrImageSyncNotFound   WatchError = "imagesync notfound"
+	ErrPullSecretsNotFound WatchError = "pull secrets not found"
 )

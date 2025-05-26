@@ -1,0 +1,18 @@
+all: false
+dir: "pkg/mock"
+force-file-write: true
+formatter: goimports
+log-level: info
+structname: '{{.Mock}}{{.InterfaceName}}'
+pkgname: "mock"
+recursive: false
+template: testify
+packages:
+  ctx.sh/coral/pkg/agent/image:
+    config:
+      filename: "image.go"
+    interfaces:
+      ImageClient:
+      ImageServiceClient:
+      RuntimeServiceClient:
+

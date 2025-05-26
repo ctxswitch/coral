@@ -24,7 +24,6 @@ func NewAuth(pullSecrets []corev1.Secret) (*Auth, error) {
 }
 
 func (a *Auth) Lookup(name string) []*runtime.AuthConfig {
-	// TODO: should probably cache this, but for now, it's not super expensive.
 	auth := a.authLookup(name)
 	runtimeAuth := make([]*runtime.AuthConfig, len(auth))
 	for i, v := range auth {
