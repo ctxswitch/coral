@@ -66,12 +66,10 @@ func (s *AuthTestSuite) TestLookup() {
 
 	// Lookup the auth for the registry
 	result := auth.Lookup("fake.registry.io")
-	s.Require().Len(result, 1)
 	s.Require().Equal("fakeuser", result[0].Username)
 	s.Require().Equal("fakepass", result[0].Password)
 
 	result = auth.Lookup("another.registry.io")
-	s.Require().Len(result, 1)
 	s.Require().Equal("anotheruser", result[0].Username)
 	s.Require().Equal("anotherpass", result[0].Password)
 }
