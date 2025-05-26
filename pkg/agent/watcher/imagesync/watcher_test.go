@@ -10,7 +10,6 @@ import (
 	"go.uber.org/zap/zapcore"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
-	crun "k8s.io/cri-api/pkg/apis/runtime/v1"
 	"path/filepath"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -50,12 +49,12 @@ func (s *WatcherTestSuite) TestReconcile_pull() {
 
 	wq := queue.New(1)
 	imageClient := mock.NewMockImageClient(s.T())
-	imageClient.EXPECT().Pull(smock.Anything, "b7f01748-4d55-4bc3-939a-a458c19ca533", "docker.io/library/golang:latest", []*crun.AuthConfig{}).Return(image.Info{
+	imageClient.EXPECT().Pull(smock.Anything, "b7f01748-4d55-4bc3-939a-a458c19ca533", "docker.io/library/golang:latest", smock.Anything).Return(image.Info{
 		ID:   "golang-id",
 		Name: "docker.io/library/golang:latest",
 		Tags: []string{"latest"},
 	}, nil).Once()
-	imageClient.EXPECT().Pull(smock.Anything, "b7f01748-4d55-4bc3-939a-a458c19ca533", "docker.io/library/nginx:latest", []*crun.AuthConfig{}).Return(image.Info{
+	imageClient.EXPECT().Pull(smock.Anything, "b7f01748-4d55-4bc3-939a-a458c19ca533", "docker.io/library/nginx:latest", smock.Anything).Return(image.Info{
 		ID:   "nginx-id",
 		Name: "docker.io/library/nginx:latest",
 		Tags: []string{"latest"},
@@ -167,7 +166,7 @@ func (s *WatcherTestSuite) TestReconcile_delete_single() {
 
 	wq := queue.New(1)
 	imageClient := mock.NewMockImageClient(s.T())
-	imageClient.EXPECT().Pull(smock.Anything, "b7f01748-4d55-4bc3-939a-a458c19ca533", "docker.io/library/golang:latest", []*crun.AuthConfig{}).Return(image.Info{
+	imageClient.EXPECT().Pull(smock.Anything, "b7f01748-4d55-4bc3-939a-a458c19ca533", "docker.io/library/golang:latest", smock.Anything).Return(image.Info{
 		ID:   "golang-id",
 		Name: "docker.io/library/golang:latest",
 		Tags: []string{"latest"},
