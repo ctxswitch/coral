@@ -204,7 +204,6 @@ func (w *Watcher) addImage(ctx context.Context, uid, img string, auth *Auth) err
 
 	w.collection.Add(uid, info.Name, info.ID)
 	return nil
-
 }
 
 func (w *Watcher) deleteImage(ctx context.Context, uid, img string) error {

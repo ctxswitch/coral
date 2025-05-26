@@ -89,7 +89,7 @@ func (c *References) ToImageList() []string {
 
 func (c *References) ImageListForUID(uid string) []string {
 	images := make([]string, 0)
-	for k, _ := range c.refs {
+	for k := range c.refs {
 		if k.UID == uid {
 			images = append(images, k.Image)
 		}

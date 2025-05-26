@@ -3,7 +3,6 @@ package image
 import (
 	"context"
 
-	crun "k8s.io/cri-api/pkg/apis/runtime/v1"
 	runtime "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
@@ -26,9 +25,9 @@ type Info struct {
 }
 
 type ImageServiceClient interface {
-	crun.ImageServiceClient
+	runtime.ImageServiceClient
 }
 
 type RuntimeServiceClient interface {
-	crun.RuntimeServiceClient
+	runtime.RuntimeServiceClient
 }
