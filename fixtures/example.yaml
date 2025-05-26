@@ -1,0 +1,47 @@
+apiVersion: coral.ctx.sh/v1beta1
+kind: ImageSync
+metadata:
+  name: example
+  namespace: default
+spec:
+  images:
+    - golang:latest
+---
+apiVersion: coral.ctx.sh/v1beta1
+kind: ImageSync
+metadata:
+  name: example-with-secrets
+  namespace: default
+spec:
+  images:
+    - golang:latest
+  imagePullSecrets:
+    - name: fake-credentials
+---
+apiVersion: coral.ctx.sh/v1beta1
+kind: ImageSync
+metadata:
+  name: example-with-missing-secrets
+  namespace: default
+spec:
+  images:
+    - golang:latest
+  imagePullSecrets:
+    - name: missing-credentials
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: fake-credentials
+  namespace: default
+type: kubernetes.io/dockerconfigjson
+# Fake credentials for testing purposes (fake:secret)
+stringData:
+  .dockerconfigjson: |
+    {
+      "auths": {
+        "https://index.docker.io/v1/": {
+          "auth": "ZmFrZTpzZWNyZXQK"
+        }
+      }
+    }

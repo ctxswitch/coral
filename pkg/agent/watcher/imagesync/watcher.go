@@ -120,12 +120,14 @@ func (w *Watcher) Reconcile(ctx context.Context, req Request) (ctrl.Result, erro
 			// Node doesn't match, ensure that we've cleaned up any labels in case the
 			// selectors were changed.
 			if w.collection.HasUID(string(observed.ImageSync.GetUID())) {
-				return ctrl.Result{}, w.delete(ctx, observed.ImageSync)
+				return w.process(ctx, observed.ImageSync, observed.PullSecrets, true)
 			}
 
 			return ctrl.Result{}, nil
 		case errors.Is(err, ErrImageSyncNotFound):
 			return ctrl.Result{}, nil
+		case errors.Is(err, ErrPullSecretsNotFound):
+			log.Error(err, "pull secrets not found")
 		default:
 			log.Error(err, "unable to observe state", "request", req)
 			return ctrl.Result{}, err
@@ -135,24 +137,49 @@ func (w *Watcher) Reconcile(ctx context.Context, req Request) (ctrl.Result, erro
 	// Handle the images that are being deleted.
 	if !observed.ImageSync.DeletionTimestamp.IsZero() {
 		log.V(2).Info("imagesync is being deleted, cleaning up")
-		if derr := w.delete(ctx, observed.ImageSync); derr != nil {
-			log.Error(derr, "failed to delete imagesync")
-			// TODO: update the labels regardless of the errors, but still handle the error.
-			return ctrl.Result{}, err
-		}
-		return ctrl.Result{}, w.updateLabels(ctx)
+		return w.process(ctx, observed.ImageSync, observed.PullSecrets, true)
 	}
 
-	auth, err := NewAuth(observed.PullSecrets)
+	return w.process(ctx, observed.ImageSync, observed.PullSecrets, false)
+}
+
+func (w *Watcher) process(ctx context.Context, obj *coralv1beta1.ImageSync, pullSecrets []corev1.Secret, deleted bool) (ctrl.Result, error) {
+	uid := string(obj.GetUID())
+	log := ctrl.LoggerFrom(ctx)
+
+	seen := make(map[string]bool)
+	for _, img := range w.collection.ImageListForUID(uid) {
+		seen[img] = false
+	}
+
+	for _, img := range obj.Spec.Images {
+		fqn := util.GetImageQualifiedName(util.DefaultSearchRegistry, img)
+		seen[fqn] = true
+	}
+
+	log.V(4).Info("seen images", "map", seen, "deleted", deleted)
+
+	auth, err := NewAuth(pullSecrets)
 	if err != nil {
-		log.Error(err, "failed to create auth")
 		return ctrl.Result{}, err
 	}
 
-	log.V(2).Info("processing imagesync")
-	if err := w.add(ctx, observed.ImageSync, auth); err != nil {
-		log.Error(err, "failed to add imagesync")
-		// TODO: update the labels regardless of the errors, but still handle the error.
+	eg, ctx := errgroup.WithContext(ctx)
+
+	for img, present := range seen {
+		if !present || deleted {
+			eg.Go(func() error {
+				return w.deleteImage(ctx, uid, img)
+			})
+		} else {
+			eg.Go(func() error {
+				return w.addImage(ctx, uid, img, auth)
+			})
+		}
+	}
+
+	if err := eg.Wait(); err != nil {
+		log.Error(err, "failed to process imagesync", "uid", uid)
 		return ctrl.Result{}, err
 	}
 
@@ -162,56 +189,39 @@ func (w *Watcher) Reconcile(ctx context.Context, req Request) (ctrl.Result, erro
 	return ctrl.Result{}, w.updateLabels(ctx)
 }
 
-func (w *Watcher) add(ctx context.Context, obj *coralv1beta1.ImageSync, auth *Auth) error {
-	eg, ctx := errgroup.WithContext(ctx)
+func (w *Watcher) addImage(ctx context.Context, uid, img string, auth *Auth) error {
+	w.workQueue.Acquire()
+	defer w.workQueue.Release()
 
-	uid := string(obj.GetUID())
 	log := ctrl.LoggerFrom(ctx)
+	log.V(2).Info("adding image", "image", img)
 
-	for _, img := range obj.Status.Images {
-		eg.Go(func() error {
-			w.workQueue.Acquire()
-			defer w.workQueue.Release()
-
-			creds := auth.Lookup(img.Image)
-			log.V(4).Info("worker is processing image")
-			info, err := w.imageClient.Pull(ctx, uid, img.Image, creds)
-			if err != nil {
-				return err
-			}
-
-			w.collection.Add(uid, info.Name, info.ID)
-			return nil
-		})
+	creds := auth.Lookup(img)
+	info, err := w.imageClient.Pull(ctx, uid, img, creds)
+	if err != nil {
+		return err
 	}
 
-	return eg.Wait()
+	w.collection.Add(uid, info.Name, info.ID)
+	return nil
 }
 
-func (w *Watcher) delete(ctx context.Context, obj *coralv1beta1.ImageSync) error {
-	eg, ctx := errgroup.WithContext(ctx)
+func (w *Watcher) deleteImage(ctx context.Context, uid, img string) error {
+	w.workQueue.Acquire()
+	defer w.workQueue.Release()
 
-	uid := string(obj.GetUID())
+	log := ctrl.LoggerFrom(ctx)
+	log.V(2).Info("deleting image", "image", img)
 
-	for _, img := range obj.Status.Images {
-		eg.Go(func() error {
-			w.workQueue.Acquire()
-			defer w.workQueue.Release()
-
-			info, err := w.imageClient.Delete(ctx, uid, img.Image)
-			if err != nil {
-				return err
-			}
-
-			w.collection.Remove(uid, info.Name, info.ID)
-			return err
-		})
+	info, err := w.imageClient.Delete(ctx, uid, img)
+	if err != nil {
+		return err
 	}
 
-	return eg.Wait()
+	w.collection.Remove(uid, info.Name, info.ID)
+	return nil
 }
 
-// 3. Compare them with images on the node and add the images.
 func (w *Watcher) updateLabels(ctx context.Context) error {
 	node := new(corev1.Node)
 	if err := w.Get(ctx, client.ObjectKey{Name: w.nodeName}, node); err != nil {
@@ -222,6 +232,10 @@ func (w *Watcher) updateLabels(ctx context.Context) error {
 
 	// Remove the imagesync labels.
 	labels := node.GetLabels()
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+
 	for k := range labels {
 		if strings.Contains(k, coralv1beta1.ImageSyncLabel) {
 			delete(labels, k)

@@ -23,3 +23,11 @@ type Info struct {
 	// Tags are the tags associated with the image.
 	Tags []string
 }
+
+type ImageServiceClient interface {
+	runtime.ImageServiceClient
+}
+
+type RuntimeServiceClient interface {
+	runtime.RuntimeServiceClient
+}

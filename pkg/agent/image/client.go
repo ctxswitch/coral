@@ -20,8 +20,8 @@ const (
 
 type Client struct {
 	authCache map[string]*crun.AuthConfig
-	isc       crun.ImageServiceClient
-	rsc       crun.RuntimeServiceClient
+	isc       ImageServiceClient
+	rsc       RuntimeServiceClient
 
 	sync.Mutex
 }
@@ -30,6 +30,16 @@ func New() *Client {
 	return &Client{
 		authCache: make(map[string]*crun.AuthConfig),
 	}
+}
+
+func (c *Client) WithImageServiceClient(isc ImageServiceClient) *Client {
+	c.isc = isc
+	return c
+}
+
+func (c *Client) WithRuntimeServiceClient(rsc RuntimeServiceClient) *Client {
+	c.rsc = rsc
+	return c
 }
 
 func (c *Client) Connect(ctx context.Context, addr string) error {

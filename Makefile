@@ -8,6 +8,7 @@ KUSTOMIZE_VERSION ?= v5.4.2
 GOLANGCI_LINT_VERSION ?= v2.1.6
 GOIMPORTS_VERSION ?= latest
 ADDLICENSE_VERSION ?= v1.0.0
+MOCKERY_VERSION ?= v3.2.5
 BUF_VERSION ?= latest
 PROTOC_GEN_GO_VERSION ?= latest
 PROTOC_GEN_CONNECT_GO_VERSION ?= latest
@@ -22,6 +23,7 @@ CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 GOLANGCI_LINT = $(LOCALBIN)/golangci-lint
 GOIMPORTS = $(LOCALBIN)/goimports
 ADDLICENSE = $(LOCALBIN)/addlicense
+MOCKERY = $(LOCALBIN)/mockery
 BUF = $(LOCALBIN)/buf
 PROTOC_GEN_GO = $(LOCALBIN)/protoc-gen-go
 PROTOC_GEN_CONNECT_GO = $(LOCALBIN)/protoc-gen-connect-go
@@ -75,9 +77,19 @@ uninstall:
 ###
 ### Tests/Utils
 ###
+.PHONY: mocks
+mocks: $(MOCKERY)
+	@$(MOCKERY)
+
 .PHONY: test
 test:
 	go test ./... $(GO_VERBOSE) $(GO_COVERPROFILE)
+
+.PHONY: cover
+cover:
+	@mkdir -p $(TARGETDIR)
+	go test ./... $(GO_VERBOSE) -coverprofile=cover.out
+	@go tool cover -html=cover.out
 
 .PHONY: lint
 lint: $(GOLANGCI_LINT)
@@ -113,7 +125,7 @@ build: $(TARGETDIR)
 ###
 ### Individual dep installs were copied out of kubebuilder testdata makefiles.
 ###
-deps: $(CONTROLLER_GEN) $(KUSTOMIZE) $(GOLANGCI_LINT) $(ADDLICENSE) $(BUF) $(PROTOC_GEN_GO) $(PROTOC_GEN_CONNECT_GO)
+deps: $(CONTROLLER_GEN) $(KUSTOMIZE) $(GOLANGCI_LINT) $(ADDLICENSE) $(BUF) $(PROTOC_GEN_GO) $(PROTOC_GEN_CONNECT_GO) $(MOCKERY)
 
 $(LOCALBIN):
 	@mkdir -p $(LOCALBIN)
@@ -129,6 +141,10 @@ $(KUSTOMIZE):
 $(GOLANGCI_LINT): $(LOCALBIN)
 	@test -s $(GOLANGCI_LINT) || \
 	GOBIN=$(LOCALBIN) go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@${GOLANGCI_LINT_VERSION}
+
+$(MOCKERY): $(LOCALBIN)
+	@test -s $(MOCKERY) || \
+	GOBIN=$(LOCALBIN) go install github.com/vektra/mockery/v3@${MOCKERY_VERSION}
 
 $(GOIMPORTS): $(LOCALBIN)
 	@test -s $(GOIMPORTS) || \

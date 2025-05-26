@@ -1,0 +1,13 @@
+apiVersion: coral.ctx.sh/v1beta1
+kind: ImageSync
+metadata:
+  name: example
+  namespace: default
+spec:
+  nodeSelector:
+    - key: role
+      operator: in
+      values:
+        - app
+  images:
+    - golang:latest

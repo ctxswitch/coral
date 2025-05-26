@@ -8,7 +8,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -91,9 +90,8 @@ func (o *StateObserver) observerImageSync(ctx context.Context) (*coralv1beta1.Im
 }
 
 func (o *StateObserver) observePullSecrets(ctx context.Context, observed *ObservedState) ([]corev1.Secret, error) {
-	log := ctrl.LoggerFrom(ctx)
-
 	observedPullSecrets := make([]corev1.Secret, 0)
+	missingPullSecrets := make([]string, 0)
 
 	for _, pullSecret := range observed.ImageSync.Spec.ImagePullSecrets {
 		secret := new(corev1.Secret)
@@ -105,11 +103,14 @@ func (o *StateObserver) observePullSecrets(ctx context.Context, observed *Observ
 			if client.IgnoreNotFound(err) != nil {
 				return nil, err
 			}
-			log.V(3).Info("pull secret not found", "name", pullSecret.Name, "namespace", observed.ImageSync.Namespace)
-			continue
+			missingPullSecrets = append(missingPullSecrets, pullSecret.Name)
 		}
 
 		observedPullSecrets = append(observedPullSecrets, *secret.DeepCopy())
+	}
+
+	if len(missingPullSecrets) > 0 {
+		return nil, ErrPullSecretsNotFound
 	}
 
 	return observedPullSecrets, nil
