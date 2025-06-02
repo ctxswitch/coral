@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	ctrl "sigs.k8s.io/controller-runtime"
+
 	coralv1beta1 "ctx.sh/coral/pkg/apis/coral.ctx.sh/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -22,6 +24,7 @@ func NewObservedState() *ObservedState {
 	return &ObservedState{
 		ImageSync:   nil,
 		PullSecrets: nil,
+		// TODO: I don't think that I need the node anymore.
 		Node:        nil,
 		ObserveTime: time.Now(),
 	}
@@ -109,8 +112,14 @@ func (o *StateObserver) observePullSecrets(ctx context.Context, observed *Observ
 		observedPullSecrets = append(observedPullSecrets, *secret.DeepCopy())
 	}
 
-	if len(missingPullSecrets) > 0 {
+	// Only error if we expected pull secrets and none of them are found.
+	if len(observedPullSecrets) > 0 && len(missingPullSecrets) == len(observedPullSecrets) {
 		return nil, ErrPullSecretsNotFound
+	}
+
+	if len(missingPullSecrets) > 0 {
+		log := ctrl.LoggerFrom(ctx)
+		log.V(2).Info("pull secrets not found", "pullSecrets", missingPullSecrets)
 	}
 
 	return observedPullSecrets, nil

@@ -4,6 +4,8 @@ import (
 	"os"
 	"time"
 
+	"ctx.sh/coral/pkg/agent/reporter"
+
 	"ctx.sh/coral/pkg/agent/watcher"
 	corev1 "k8s.io/api/core/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -60,6 +62,14 @@ func (a *Agent) RunE(cmd *cobra.Command, args []string) error {
 		NodeName:                 nodeName,
 	}); err != nil {
 		log.Error(err, "unable to setup controllers")
+		os.Exit(1)
+	}
+
+	if err = reporter.SetupWithManager(ctx, mgr, &reporter.Options{
+		ContainerAddr: a.ContainerdAddr,
+		NodeName:      nodeName,
+	}); err != nil {
+		log.Error(err, "unable to setup reporter")
 		os.Exit(1)
 	}
 

@@ -1,9 +1,10 @@
 package imagesync
 
 import (
+	"testing"
+
 	"github.com/stretchr/testify/suite"
 	corev1 "k8s.io/api/core/v1"
-	"testing"
 )
 
 type AuthTestSuite struct {

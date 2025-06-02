@@ -74,6 +74,10 @@ install: $(KUSTOMIZE) deps generate
 uninstall:
 	@kubectl delete -k config/overlays/$(ENV)
 
+.PHONY: buf
+buf: $(BUF) $(PROTOC_GEN_GO) $(PROTOC_GEN_CONNECT_GO)
+	rm -rf pkg/gen && $(BUF) generate
+
 ###
 ### Tests/Utils
 ###
@@ -196,8 +200,6 @@ localdev-shared:
 
 .PHONY: localdev-clean
 localdev-clean:
-#	@$(KUBECTL) delete -k config/registry
-#	@$(KUBECTL) delete -k config/cert-manager
 	@$(KUBECTL) delete -k config/coral/overlays/$(ENV)
 
 .PHONY: controller-run

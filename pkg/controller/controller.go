@@ -16,15 +16,20 @@ package controller
 
 import (
 	"ctx.sh/coral/pkg/controller/imagesync"
+	"ctx.sh/coral/pkg/store"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
-type Options struct{}
+type Options struct {
+	NodeRef *store.NodeRef
+}
 
 type Controller struct{}
 
-func SetupWithManager(mgr ctrl.Manager) (err error) {
-	if err = imagesync.SetupWithManager(mgr); err != nil {
+func SetupWithManager(mgr ctrl.Manager, opts *Options) (err error) {
+	if err = imagesync.SetupWithManager(mgr, &imagesync.Options{
+		NodeRef: opts.NodeRef,
+	}); err != nil {
 		return
 	}
 

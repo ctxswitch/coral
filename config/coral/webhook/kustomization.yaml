@@ -20,12 +20,6 @@ patches:
       - op: replace
         path: /webhooks/0/clientConfig/service/namespace
         value: coral-system
-      - op: replace
-        path: /webhooks/1/clientConfig/service/name
-        value: coral-webhook-service
-      - op: replace
-        path: /webhooks/1/clientConfig/service/namespace
-        value: coral-system
   - target:
       kind: MutatingWebhookConfiguration
       name: mutating-webhook-configuration
@@ -39,12 +33,12 @@ patches:
       - op: replace
         path: /webhooks/0/clientConfig/service/namespace
         value: coral-system
-      - op: replace
-        path: /webhooks/1/clientConfig/service/name
-        value: coral-webhook-service
-      - op: replace
-        path: /webhooks/1/clientConfig/service/namespace
-        value: coral-system
+#      - op: replace
+#        path: /webhooks/1/clientConfig/service/name
+#        value: coral-webhook-service
+#      - op: replace
+#        path: /webhooks/1/clientConfig/service/namespace
+#        value: coral-system
 resources:
   - certs.yaml
   - manifests.yaml

@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: busybox
+  namespace: coral-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: busybox
+  template:
+    metadata:
+      labels:
+        app: busybox
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: k3d-coral-agent-0
+      terminationGracePeriodSeconds: 1
+      containers:
+        - image: busybox
+          command:
+            - sleep
+            - infinity
+          imagePullPolicy: IfNotPresent
+          name: busybox-injected
+      restartPolicy: Always

@@ -8,7 +8,7 @@ pkgname: "mock"
 recursive: false
 template: testify
 packages:
-  ctx.sh/coral/pkg/agent/image:
+  ctx.sh/coral/pkg/agent/client:
     config:
       filename: "image.go"
     interfaces:

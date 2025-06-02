@@ -2,16 +2,17 @@ package imagesync
 
 import (
 	"context"
+	"path/filepath"
+	"testing"
+
 	"ctx.sh/coral/pkg/mock"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap/zapcore"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"path/filepath"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	"testing"
 )
 
 type ObserveTestSuite struct {

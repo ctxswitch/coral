@@ -3,9 +3,9 @@ package watcher
 import (
 	"context"
 
-	"ctx.sh/coral/pkg/agent/image"
+	"ctx.sh/coral/pkg/agent/client"
 	"ctx.sh/coral/pkg/agent/watcher/imagesync"
-	"ctx.sh/coral/pkg/queue"
+	"ctx.sh/coral/pkg/limiter"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
@@ -19,23 +19,21 @@ type Options struct {
 type Watcher struct{}
 
 func SetupWithManager(ctx context.Context, mgr ctrl.Manager, opts *Options) error {
-	imageClient := image.New()
+	imageClient := client.New()
 	if err := imageClient.Connect(ctx, opts.ContainerAddr); err != nil {
 		return err
 	}
 
-	wq := queue.New(opts.MaxConcurrentPullers)
+	el := limiter.New(opts.MaxConcurrentPullers)
 
 	if err := imagesync.SetupWithManager(mgr, &imagesync.Options{
-		WorkQueue:                wq,
+		Limiter:                  el,
 		MaxConcurrentReconcilers: opts.MaxConcurrentReconcilers,
 		ImageClient:              imageClient,
 		NodeName:                 opts.NodeName,
 	}); err != nil {
 		return err
 	}
-
-	// TODO: set up polling node watcher.
 
 	return nil
 }
