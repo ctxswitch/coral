@@ -16,8 +16,9 @@ package controller
 
 import (
 	"crypto/tls"
-	"ctx.sh/coral/pkg/store"
 	"os"
+
+	"ctx.sh/coral/pkg/store"
 
 	coralv1beta1 "ctx.sh/coral/pkg/apis/coral.ctx.sh/v1beta1"
 	"ctx.sh/coral/pkg/controller"

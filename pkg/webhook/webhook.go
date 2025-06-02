@@ -15,11 +15,12 @@
 package webhook
 
 import (
+	"fmt"
+
 	"ctx.sh/coral/pkg/store"
 	coral "ctx.sh/coral/pkg/webhook/v1beta1/coral"
 	"ctx.sh/coral/pkg/webhook/v1beta1/imagesync"
 	"ctx.sh/coral/pkg/webhook/v1beta1/injector"
-	"fmt"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )

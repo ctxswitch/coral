@@ -4,9 +4,10 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"net/http"
 	"time"
+
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"connectrpc.com/connect"
 	"ctx.sh/coral/pkg/agent/client"
@@ -109,7 +110,7 @@ func (i *Image) run(ctx context.Context) error {
 	}
 
 	if resp.Msg.Status != coralv1beta1.ReporterStatus_OK {
-		return fmt.Errorf(resp.Msg.Status.String())
+		return fmt.Errorf("%s", resp.Msg.Status.String())
 	}
 
 	return nil

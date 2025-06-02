@@ -2,13 +2,14 @@ package imagesync
 
 import (
 	"context"
+	"reflect"
+	"time"
+
 	"ctx.sh/coral/pkg/store"
 	"ctx.sh/coral/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"reflect"
-	"time"
 
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
@@ -76,13 +77,13 @@ func (su *StatusUpdater) Stop() {
 	})
 }
 
-func (su *StatusUpdater) update(ctx context.Context) error {
+func (su *StatusUpdater) update(ctx context.Context) error { // nolint:gocognit
 	// TODO: Wait on init lock.
 
 	log := ctrl.LoggerFrom(ctx)
 
 	var isyncs coralv1beta1.ImageSyncList
-	if err := su.Client.List(ctx, &isyncs); err != nil {
+	if err := su.List(ctx, &isyncs); err != nil {
 		return err
 	}
 
@@ -91,13 +92,13 @@ func (su *StatusUpdater) update(ctx context.Context) error {
 	}
 
 	var nodes corev1.NodeList
-	if err := su.Client.List(ctx, &nodes); err != nil {
+	if err := su.List(ctx, &nodes); err != nil {
 		return err
 	}
 
 	for _, item := range isyncs.Items {
 		isync := item.DeepCopy()
-		log := log.WithValues("name", isync.GetName(), "namespace", isync.GetNamespace())
+		nlog := log.WithValues("name", isync.GetName(), "namespace", isync.GetNamespace())
 
 		filteredNodes := su.filterNodes(nodes.Items, isync.Spec.NodeSelector)
 
@@ -111,7 +112,7 @@ func (su *StatusUpdater) update(ctx context.Context) error {
 		}
 
 		if len(filteredNodes) == 0 {
-			ctrl.LoggerFrom(ctx).V(4).Info("no nodes match the imagesync node selector")
+			nlog.V(4).Info("no nodes match the imagesync node selector")
 			return su.updateStatus(ctx, isync, status)
 		}
 
@@ -149,7 +150,7 @@ func (su *StatusUpdater) update(ctx context.Context) error {
 			Pending:   len(filteredNodes) - minNodes,
 		}
 
-		log.V(5).Info("updating imagesync status", "status", status)
+		nlog.V(5).Info("updating imagesync status", "status", status)
 		if err := su.updateStatus(ctx, isync, status); err != nil {
 			ctrl.LoggerFrom(ctx).Error(err, "failed to update imagesync status")
 		}
