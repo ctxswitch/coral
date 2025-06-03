@@ -70,6 +70,7 @@ func (c *Controller) RunE(cmd *cobra.Command, args []string) error {
 		// CertName:     DefaultCertName,
 		// KeyName:      DefaultKeyName,
 		// ClientCAName: DefaultClientCAName,
+		InsecureSkipVerify: c.SkipInsecureVerify,
 		TLSOpts: []func(*tls.Config){
 			func(config *tls.Config) {
 				config.InsecureSkipVerify = c.SkipInsecureVerify

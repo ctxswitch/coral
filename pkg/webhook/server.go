@@ -26,14 +26,15 @@ const (
 )
 
 type ServerOptions struct {
-	Host         string
-	Port         int
-	CertDir      string
-	CertName     string
-	KeyName      string
-	ClientCAName string
-	TLSOpts      []func(*tls.Config)
-	WebhookMux   *http.ServeMux
+	Host               string
+	Port               int
+	CertDir            string
+	CertName           string
+	KeyName            string
+	ClientCAName       string
+	TLSOpts            []func(*tls.Config)
+	WebhookMux         *http.ServeMux
+	InsecureSkipVerify bool
 }
 
 // NewServer constructs a new webhook.Server from the provided options.  This is
@@ -123,9 +124,9 @@ func (s *DefaultServer) Start(ctx context.Context) error {
 
 	logger.Info("Starting webhook server")
 
-	cfg := &tls.Config{ //nolint:gosec
+	cfg := &tls.Config{
 		NextProtos:         []string{"h2"},
-		InsecureSkipVerify: true, //nolint:gosec
+		InsecureSkipVerify: s.Options.InsecureSkipVerify, //nolint:gosec
 	}
 
 	for _, op := range s.Options.TLSOpts {
