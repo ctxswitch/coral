@@ -74,6 +74,10 @@ install: $(KUSTOMIZE) deps generate
 uninstall:
 	@kubectl delete -k config/overlays/$(ENV)
 
+.PHONY: buf
+buf: $(BUF) $(PROTOC_GEN_GO) $(PROTOC_GEN_CONNECT_GO)
+	rm -rf pkg/gen && $(BUF) generate
+
 ###
 ### Tests/Utils
 ###
@@ -196,14 +200,12 @@ localdev-shared:
 
 .PHONY: localdev-clean
 localdev-clean:
-#	@$(KUBECTL) delete -k config/registry
-#	@$(KUBECTL) delete -k config/cert-manager
 	@$(KUBECTL) delete -k config/coral/overlays/$(ENV)
 
 .PHONY: controller-run
 controller-run:
 	$(eval POD := $(shell kubectl get pods -n coral-system -l app=controller -o=custom-columns=:metadata.name --no-headers))
-	@$(KUBECTL) exec -n coral-system -it pod/$(POD) -- bash -c "go run pkg/cmd/coral/*.go controller --log-level=5 --skip-insecure-verify=true"
+	@$(KUBECTL) exec -n coral-system -it pod/$(POD) -- bash -c "go run pkg/cmd/coral/*.go controller --log-level=5"
 
 .PHONY: controller-exec
 controller-exec:

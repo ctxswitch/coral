@@ -15,12 +15,16 @@
 package main
 
 const (
-	DefaultCertDir                  string = "/etc/webhook/tls"
+	DefaultCertDir                  string = "/etc/coral/tls"
+	DefaultCACertName               string = "ca.crt"
+	DefaultCertName                 string = "tls.crt"
+	DefaultKeyName                  string = "tls.key"
 	DefaultEnableLeaderElection     bool   = false
-	DefaultSkipInsecureVerify       bool   = false
+	DefaultSkipInsecureVerify       bool   = true
 	DefaultLogLevel                 int8   = 4
 	DefaultContainerdAddr           string = "unix:///run/containerd/containerd.sock"
 	DefaultNamespace                string = ""
 	DefaultMaxConcurrentPullers     int    = 10
 	DefaultMaxConcurrentReconcilers int    = 3
+	DefaultCoralHost                string = "https://coral-webhook-service.coral-system.svc"
 )

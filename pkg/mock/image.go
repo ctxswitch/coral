@@ -7,10 +7,10 @@ package mock
 import (
 	"context"
 
-	"ctx.sh/coral/pkg/agent/image"
+	"ctx.sh/coral/pkg/agent/client"
 	mock "github.com/stretchr/testify/mock"
 	"google.golang.org/grpc"
-	"k8s.io/cri-api/pkg/apis/runtime/v1"
+	v1 "k8s.io/cri-api/pkg/apis/runtime/v1"
 )
 
 // NewMockImageClient creates a new instance of MockImageClient. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
@@ -41,22 +41,22 @@ func (_m *MockImageClient) EXPECT() *MockImageClient_Expecter {
 }
 
 // Delete provides a mock function for the type MockImageClient
-func (_mock *MockImageClient) Delete(ctx context.Context, uid string, name string) (image.Info, error) {
+func (_mock *MockImageClient) Delete(ctx context.Context, uid string, name string) (client.Info, error) {
 	ret := _mock.Called(ctx, uid, name)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Delete")
 	}
 
-	var r0 image.Info
+	var r0 client.Info
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (image.Info, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (client.Info, error)); ok {
 		return returnFunc(ctx, uid, name)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) image.Info); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) client.Info); ok {
 		r0 = returnFunc(ctx, uid, name)
 	} else {
-		r0 = ret.Get(0).(image.Info)
+		r0 = ret.Get(0).(client.Info)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
 		r1 = returnFunc(ctx, uid, name)
@@ -86,40 +86,87 @@ func (_c *MockImageClient_Delete_Call) Run(run func(ctx context.Context, uid str
 	return _c
 }
 
-func (_c *MockImageClient_Delete_Call) Return(info image.Info, err error) *MockImageClient_Delete_Call {
+func (_c *MockImageClient_Delete_Call) Return(info client.Info, err error) *MockImageClient_Delete_Call {
 	_c.Call.Return(info, err)
 	return _c
 }
 
-func (_c *MockImageClient_Delete_Call) RunAndReturn(run func(ctx context.Context, uid string, name string) (image.Info, error)) *MockImageClient_Delete_Call {
+func (_c *MockImageClient_Delete_Call) RunAndReturn(run func(ctx context.Context, uid string, name string) (client.Info, error)) *MockImageClient_Delete_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// List provides a mock function for the type MockImageClient
+func (_mock *MockImageClient) List(ctx context.Context) ([]string, error) {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for List")
+	}
+
+	var r0 []string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]string, error)); ok {
+		return returnFunc(ctx)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []string); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockImageClient_List_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'List'
+type MockImageClient_List_Call struct {
+	*mock.Call
+}
+
+// List is a helper method to define mock.On call
+//   - ctx
+func (_e *MockImageClient_Expecter) List(ctx interface{}) *MockImageClient_List_Call {
+	return &MockImageClient_List_Call{Call: _e.mock.On("List", ctx)}
+}
+
+func (_c *MockImageClient_List_Call) Run(run func(ctx context.Context)) *MockImageClient_List_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockImageClient_List_Call) Return(strings []string, err error) *MockImageClient_List_Call {
+	_c.Call.Return(strings, err)
+	return _c
+}
+
+func (_c *MockImageClient_List_Call) RunAndReturn(run func(ctx context.Context) ([]string, error)) *MockImageClient_List_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Pull provides a mock function for the type MockImageClient
-func (_mock *MockImageClient) Pull(ctx context.Context, uid string, name string, auth []*v1.AuthConfig) (image.Info, error) {
-	ret := _mock.Called(ctx, uid, name, auth)
+func (_mock *MockImageClient) Pull(ctx context.Context, name string, auth []*v1.AuthConfig) error {
+	ret := _mock.Called(ctx, name, auth)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Pull")
 	}
 
-	var r0 image.Info
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, []*v1.AuthConfig) (image.Info, error)); ok {
-		return returnFunc(ctx, uid, name, auth)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, []*v1.AuthConfig) image.Info); ok {
-		r0 = returnFunc(ctx, uid, name, auth)
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []*v1.AuthConfig) error); ok {
+		r0 = returnFunc(ctx, name, auth)
 	} else {
-		r0 = ret.Get(0).(image.Info)
+		r0 = ret.Error(0)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, []*v1.AuthConfig) error); ok {
-		r1 = returnFunc(ctx, uid, name, auth)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
+	return r0
 }
 
 // MockImageClient_Pull_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Pull'
@@ -129,47 +176,46 @@ type MockImageClient_Pull_Call struct {
 
 // Pull is a helper method to define mock.On call
 //   - ctx
-//   - uid
 //   - name
 //   - auth
-func (_e *MockImageClient_Expecter) Pull(ctx interface{}, uid interface{}, name interface{}, auth interface{}) *MockImageClient_Pull_Call {
-	return &MockImageClient_Pull_Call{Call: _e.mock.On("Pull", ctx, uid, name, auth)}
+func (_e *MockImageClient_Expecter) Pull(ctx interface{}, name interface{}, auth interface{}) *MockImageClient_Pull_Call {
+	return &MockImageClient_Pull_Call{Call: _e.mock.On("Pull", ctx, name, auth)}
 }
 
-func (_c *MockImageClient_Pull_Call) Run(run func(ctx context.Context, uid string, name string, auth []*v1.AuthConfig)) *MockImageClient_Pull_Call {
+func (_c *MockImageClient_Pull_Call) Run(run func(ctx context.Context, name string, auth []*v1.AuthConfig)) *MockImageClient_Pull_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].([]*v1.AuthConfig))
+		run(args[0].(context.Context), args[1].(string), args[2].([]*v1.AuthConfig))
 	})
 	return _c
 }
 
-func (_c *MockImageClient_Pull_Call) Return(info image.Info, err error) *MockImageClient_Pull_Call {
-	_c.Call.Return(info, err)
+func (_c *MockImageClient_Pull_Call) Return(err error) *MockImageClient_Pull_Call {
+	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockImageClient_Pull_Call) RunAndReturn(run func(ctx context.Context, uid string, name string, auth []*v1.AuthConfig) (image.Info, error)) *MockImageClient_Pull_Call {
+func (_c *MockImageClient_Pull_Call) RunAndReturn(run func(ctx context.Context, name string, auth []*v1.AuthConfig) error) *MockImageClient_Pull_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Status provides a mock function for the type MockImageClient
-func (_mock *MockImageClient) Status(ctx context.Context, name string) (image.Info, error) {
+func (_mock *MockImageClient) Status(ctx context.Context, name string) (client.Info, error) {
 	ret := _mock.Called(ctx, name)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Status")
 	}
 
-	var r0 image.Info
+	var r0 client.Info
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (image.Info, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (client.Info, error)); ok {
 		return returnFunc(ctx, name)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) image.Info); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) client.Info); ok {
 		r0 = returnFunc(ctx, name)
 	} else {
-		r0 = ret.Get(0).(image.Info)
+		r0 = ret.Get(0).(client.Info)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
 		r1 = returnFunc(ctx, name)
@@ -198,12 +244,12 @@ func (_c *MockImageClient_Status_Call) Run(run func(ctx context.Context, name st
 	return _c
 }
 
-func (_c *MockImageClient_Status_Call) Return(info image.Info, err error) *MockImageClient_Status_Call {
+func (_c *MockImageClient_Status_Call) Return(info client.Info, err error) *MockImageClient_Status_Call {
 	_c.Call.Return(info, err)
 	return _c
 }
 
-func (_c *MockImageClient_Status_Call) RunAndReturn(run func(ctx context.Context, name string) (image.Info, error)) *MockImageClient_Status_Call {
+func (_c *MockImageClient_Status_Call) RunAndReturn(run func(ctx context.Context, name string) (client.Info, error)) *MockImageClient_Status_Call {
 	_c.Call.Return(run)
 	return _c
 }

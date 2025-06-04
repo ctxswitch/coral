@@ -40,8 +40,14 @@ spec:
           volumeMounts:
             - name: containerd
               mountPath: "/run/containerd"
+            - name: tls
+              mountPath: "/etc/coral/tls"
+              readOnly: true
       volumes:
         # TODO: Fix me before release
         - name: containerd
           hostPath:
             path: /run/k3s/containerd
+        - name: tls
+          secret:
+            secretName: coral-agent-cert

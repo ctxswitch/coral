@@ -103,19 +103,14 @@ spec:
                       type: integer
                     image:
                       type: string
-                    name:
-                      type: string
                     pending:
                       type: integer
-                    reference:
-                      type: string
                   required:
                   - image
-                  - name
-                  - reference
                   type: object
                 type: array
-              revision:
+              lastUpdated:
+                format: date-time
                 type: string
               totalImages:
                 type: integer

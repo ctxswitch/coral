@@ -25,11 +25,14 @@ import (
 // +kubebuilder:docs-gen:collapse=Go imports
 
 const (
-	ImageSyncFinalizer  = "imagesync.coral.ctx.sh/finalizer"
-	MirrorFinalizer     = "mirror.coral.ctx.sh/finalizer"
-	ImageSyncLabel      = "imagesync.coral.ctx.sh"
-	ProcessedLabelName  = ImageSyncLabel + "/processed"
-	ProcessedLabelValue = "true"
+	ImageSyncFinalizer                  = "imagesync.coral.ctx.sh/finalizer"
+	MirrorFinalizer                     = "mirror.coral.ctx.sh/finalizer"
+	ImageSyncLabel                      = "imagesync.coral.ctx.sh"
+	ImageSyncEnableAnnotation           = ImageSyncLabel + "/enabled"
+	ImageSyncPullPolicyAnnotation       = ImageSyncLabel + "/pull-policy"
+	ImageSyncContainerIncludeAnnotation = ImageSyncLabel + "/include-containers"
+	ImageSyncContainerExcludeAnnotation = ImageSyncLabel + "/exclude-containers"
+	ImageSyncInjectedAnnotation         = ImageSyncLabel + "/injected"
 )
 
 type NodeSelector struct {
@@ -105,21 +108,15 @@ type ImageSyncCondition struct {
 // ImageSyncImage contains details about an image that is being synced.
 type ImageSyncImage struct {
 	// +required
-	// Name is the name of the image that the user has defined.
-	Name string `json:"name,omitempty"`
-	// +required
 	// Image is the fully qualified image with tag that is being synced.  This represents what is
 	// being parsed and represented on the agents, nodes, and webhooks.
-	Image string `json:"image,omitempty"`
-	// +required
-	// Reference is the digest of the image that is being synced.
-	Reference string `json:"reference,omitempty"`
+	Image string `json:"image"`
 	// +optional
 	// Available is the number of nodes that have the image available.
-	Available int `json:"available,omitempty"`
+	Available int `json:"available"`
 	// +optional
 	// Pending is the number of nodes that are pending image download.
-	Pending int `json:"pending,omitempty"`
+	Pending int `json:"pending"`
 }
 
 // ImageSyncStatus is the status for a WatchSet resource.
@@ -137,8 +134,8 @@ type ImageSyncStatus struct {
 	// Images is a list of images with label mappings.
 	Images []ImageSyncImage `json:"images,omitempty"`
 	// +optional
-	// Revision is the hash of the current image sync resource.
-	Revision string `json:"revision,omitempty"`
+	// LastUpdated is the last time the status was updated.
+	LastUpdated metav1.Time `json:"lastUpdated,omitempty"`
 }
 
 type MirrorSpec struct {

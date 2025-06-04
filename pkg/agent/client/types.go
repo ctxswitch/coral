@@ -1,4 +1,4 @@
-package image
+package client
 
 import (
 	"context"
@@ -8,11 +8,13 @@ import (
 
 type ImageClient interface {
 	// Pull pulls a container image if not present.
-	Pull(ctx context.Context, uid, name string, auth []*runtime.AuthConfig) (Info, error)
+	Pull(ctx context.Context, name string, auth []*runtime.AuthConfig) error
 	// Delete deletes a container image that is not in use.
 	Delete(ctx context.Context, uid, name string) (Info, error)
 	// Status returns the status of an image.
 	Status(ctx context.Context, name string) (Info, error)
+	// List lists all images.
+	List(ctx context.Context) ([]string, error)
 }
 
 type Info struct {

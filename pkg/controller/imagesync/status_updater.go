@@ -2,11 +2,18 @@ package imagesync
 
 import (
 	"context"
+	"reflect"
 	"time"
 
-	coralv1beta1 "ctx.sh/coral/pkg/apis/coral.ctx.sh/v1beta1"
+	"ctx.sh/coral/pkg/store"
+	"ctx.sh/coral/pkg/util"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+
+	"sigs.k8s.io/controller-runtime/pkg/manager"
+
+	coralv1beta1 "ctx.sh/coral/pkg/apis/coral.ctx.sh/v1beta1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 
@@ -21,17 +28,25 @@ type StatusCheck map[types.NamespacedName]coralv1beta1.ImageSyncCondition
 // StatusUpdater is a process that runs in the background to update the status of the
 // imagesync on the required nodes.
 type StatusUpdater struct {
+	nodeRef  *store.NodeRef
 	stopCh   chan struct{}
 	stopOnce sync.Once
 	client.Client
 }
 
 // NewStatusUpdater creates a new status updater.
-func NewStatusUpdater(mgr ctrl.Manager) *StatusUpdater {
+func NewStatusUpdater(c client.Client, ref *store.NodeRef) *StatusUpdater {
 	return &StatusUpdater{
-		Client: mgr.GetClient(),
-		stopCh: make(chan struct{}),
+		Client:  c,
+		nodeRef: ref,
+		stopCh:  make(chan struct{}),
 	}
+}
+
+// NeedLeaderElection returns true to indicate that this runnable should run
+// when the controller manager is the leader.
+func (su *StatusUpdater) NeedLeaderElection() bool {
+	return true
 }
 
 // Start starts the status updater process.
@@ -62,71 +77,93 @@ func (su *StatusUpdater) Stop() {
 	})
 }
 
-func (su *StatusUpdater) update(ctx context.Context) error {
-	// List all imagesyncs labeled as processed
-	var imagesyncs coralv1beta1.ImageSyncList
-	if err := su.List(ctx, &imagesyncs, client.MatchingLabels{
-		coralv1beta1.ProcessedLabelName: coralv1beta1.ProcessedLabelValue,
-	}); err != nil {
+func (su *StatusUpdater) update(ctx context.Context) error { // nolint:gocognit
+	// TODO: Wait on init lock.
+
+	log := ctrl.LoggerFrom(ctx)
+
+	var isyncs coralv1beta1.ImageSyncList
+	if err := su.List(ctx, &isyncs); err != nil {
 		return err
 	}
 
-	// List all the nodes.
+	if len(isyncs.Items) == 0 {
+		return nil
+	}
+
 	var nodes corev1.NodeList
 	if err := su.List(ctx, &nodes); err != nil {
 		return err
 	}
 
-	// TODO: Add async workers instead of a single loop for each run.  Handle this like
-	//   we do in the agent (with the limiter).  Use error wait groups.
+	for _, item := range isyncs.Items {
+		isync := item.DeepCopy()
+		nlog := log.WithValues("name", isync.GetName(), "namespace", isync.GetNamespace())
 
-	for _, i := range imagesyncs.Items {
-		filtered := su.filterNodes(nodes.Items, i.Spec.NodeSelector)
+		filteredNodes := su.filterNodes(nodes.Items, isync.Spec.NodeSelector)
+
+		status := coralv1beta1.ImageSyncStatus{
+			TotalNodes:  len(filteredNodes),
+			TotalImages: len(isync.Spec.Images),
+			Condition: coralv1beta1.ImageSyncCondition{
+				Available: 0,
+				Pending:   0,
+			},
+		}
+
+		if len(filteredNodes) == 0 {
+			nlog.V(4).Info("no nodes match the imagesync node selector")
+			return su.updateStatus(ctx, isync, status)
+		}
+
+		available := make(map[string]int)
+		for _, img := range isync.Spec.Images {
+			fqn := util.GetImageQualifiedName(util.DefaultSearchRegistry, img)
+			available[fqn] = 0
+		}
 
 		images := make([]coralv1beta1.ImageSyncImage, 0)
-		for _, image := range i.Status.Images {
-			available := 0
-			pending := 0
-
-			// TODO: Revisit.  There's probably a better/more optimal way to do this.
-			for _, node := range filtered {
-				if _, ok := node.Labels[coralv1beta1.ImageSyncLabel+"/"+image.Reference]; ok {
-					available++
-				} else {
-					pending++
+		for _, image := range isync.Spec.Images {
+			fqn := util.GetImageQualifiedName(util.DefaultSearchRegistry, image)
+			for _, node := range filteredNodes {
+				if su.nodeRef.HasImage(node.Name, fqn) {
+					available[fqn]++
 				}
 			}
 
 			images = append(images, coralv1beta1.ImageSyncImage{
-				Name:      image.Name,
-				Image:     image.Image,
-				Reference: image.Reference,
-				Available: available,
-				Pending:   pending,
+				Image:     fqn,
+				Available: available[fqn],
+				Pending:   len(filteredNodes) - available[fqn],
 			})
 		}
 
-		// Loop through the images and retrieve the number of nodes with all the images
-		// available.
-		available := len(filtered)
-		for _, image := range images {
-			available = min(available, image.Available)
+		// Get the number of nodes with all images available.
+		minNodes := len(filteredNodes)
+		for _, count := range available {
+			minNodes = min(minNodes, count)
 		}
 
-		status := i.Status.DeepCopy()
-		status.TotalImages = len(i.Status.Images)
-		status.TotalNodes = len(filtered)
-		status.Condition.Available = available
-		status.Condition.Pending = len(filtered) - available
 		status.Images = images
-
-		i.Status = *status
-
-		// Update the status of the imagesync.
-		if err := su.Client.Status().Update(ctx, &i); err != nil {
-			// don't error, just log and continue.
-			return err
+		status.Condition = coralv1beta1.ImageSyncCondition{
+			Available: minNodes,
+			Pending:   len(filteredNodes) - minNodes,
 		}
+
+		nlog.V(5).Info("updating imagesync status", "status", status)
+		if err := su.updateStatus(ctx, isync, status); err != nil {
+			ctrl.LoggerFrom(ctx).Error(err, "failed to update imagesync status")
+		}
+	}
+
+	return nil
+}
+
+func (su *StatusUpdater) updateStatus(ctx context.Context, isync *coralv1beta1.ImageSync, status coralv1beta1.ImageSyncStatus) error {
+	if !reflect.DeepEqual(isync.Status, status) {
+		status.DeepCopyInto(&isync.Status)
+		isync.Status.LastUpdated = metav1.Now()
+		return su.Client.Status().Update(ctx, isync)
 	}
 
 	return nil
@@ -155,3 +192,6 @@ func (su *StatusUpdater) matches(l map[string]string, selector []coralv1beta1.No
 
 	return ls.Matches(labels.Set(l))
 }
+
+var _ manager.Runnable = &StatusUpdater{}
+var _ manager.LeaderElectionRunnable = &StatusUpdater{}

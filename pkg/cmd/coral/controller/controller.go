@@ -17,22 +17,19 @@ package controller
 import (
 	"crypto/tls"
 	"os"
-	"sync"
 
-	"ctx.sh/coral/pkg/controller/imagesync"
+	"ctx.sh/coral/pkg/store"
 
 	coralv1beta1 "ctx.sh/coral/pkg/apis/coral.ctx.sh/v1beta1"
 	"ctx.sh/coral/pkg/controller"
-	coralwebhooks "ctx.sh/coral/pkg/webhooks/v1beta1"
+	"ctx.sh/coral/pkg/webhook"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap/zapcore"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
 
 const (
@@ -40,7 +37,10 @@ const (
 )
 
 type Controller struct {
-	Certs              string
+	CertDir            string
+	CACertName         string
+	CertName           string
+	KeyName            string
 	LeaderElection     bool
 	SkipInsecureVerify bool
 	Namespace          string
@@ -65,10 +65,13 @@ func (c *Controller) RunE(cmd *cobra.Command, args []string) error {
 
 	log.Info("starting coral controller", "controller", c)
 
-	hookServer := webhook.NewServer(webhook.Options{
-		CertDir:      c.Certs,
-		Port:         9443,
-		ClientCAName: "",
+	hookServer := webhook.NewServer(webhook.ServerOptions{
+		Port:    9443,
+		CertDir: c.CertDir,
+		// CertName:           c.CertName,
+		// KeyName:            c.KeyName,
+		// ClientCAName:       c.CACertName,
+		InsecureSkipVerify: c.SkipInsecureVerify,
 		TLSOpts: []func(*tls.Config){
 			func(config *tls.Config) {
 				config.InsecureSkipVerify = c.SkipInsecureVerify
@@ -89,44 +92,26 @@ func (c *Controller) RunE(cmd *cobra.Command, args []string) error {
 		os.Exit(1)
 	}
 
-	if err = coralwebhooks.SetupWebhooksWithManager(mgr); err != nil {
-		log.Error(err, "unable to setup webhook with manager")
-		os.Exit(1)
-	}
+	nodeRef := store.NewNodeRef()
 
-	if err = controller.SetupWithManager(mgr); err != nil {
+	// Set up controllers
+	if err = controller.SetupWithManager(mgr, &controller.Options{
+		NodeRef: nodeRef,
+	}); err != nil {
 		log.Error(err, "unable to setup controllers")
 		os.Exit(1)
 	}
 
-	if err = mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
-		log.Error(err, "unable to set up health check")
+	// Set up webhooks
+	if err = webhook.SetupWebhooksWithManager(mgr, &webhook.Options{
+		NodeRef: nodeRef,
+	}); err != nil {
+		log.Error(err, "unable to setup webhooks")
 		os.Exit(1)
 	}
-
-	if err = mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
-		log.Error(err, "unable to set up ready check")
-		os.Exit(1)
-	}
-
-	statusUpdater := imagesync.NewStatusUpdater(mgr)
-	wg := &sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if gerr := statusUpdater.Start(ctx); gerr != nil {
-			log.Error(gerr, "failed to start status updater")
-			os.Exit(1)
-		}
-	}()
 
 	// Start the manager process
 	log.Info("starting manager")
-	err = mgr.Start(ctx)
 
-	log.Info("shutting down")
-	statusUpdater.Stop()
-	wg.Wait()
-
-	return err
+	return mgr.Start(ctx)
 }

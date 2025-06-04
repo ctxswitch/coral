@@ -18,11 +18,30 @@ metadata:
     app.kubernetes.io/name: coral
 spec:
   dnsNames:
+    - coral-webhook-service
     - coral-webhook-service.coral-system.svc
     - coral-webhook-service.coral-system.svc.cluster.local
   issuerRef:
     kind: Issuer
     name: coral-selfsigned-issuer
   secretName: coral-webhook-cert
+  privateKey:
+    rotationPolicy: Never
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: coral-agent-cert
+  namespace: coral-system
+  labels:
+    app.kubernetes.io/name: agent
+spec:
+  dnsNames:
+    - agent
+    - '*.coral-system.svc.cluster.local'
+  issuerRef:
+    kind: Issuer
+    name: coral-selfsigned-issuer
+  secretName: coral-agent-cert
   privateKey:
     rotationPolicy: Never

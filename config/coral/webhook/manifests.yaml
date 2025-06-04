@@ -3,8 +3,6 @@ apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
   name: mutating-webhook-configuration
-  annotations:
-    cert-manager.io/inject-ca-from: example1/webhook1-certificate
 webhooks:
 - admissionReviewVersions:
   - v1beta1
@@ -14,37 +12,18 @@ webhooks:
       namespace: system
       path: /mutate-coral-ctx-sh-v1beta1-imagesync
   failurePolicy: Fail
+  matchPolicy: Equivalent
   name: mimagesync.coral.ctx.sh
   rules:
   - apiGroups:
     - coral.ctx.sh
     apiVersions:
-    - v1beta1
+    - v1
     operations:
     - CREATE
     - UPDATE
     resources:
     - imagesyncs
-  sideEffects: None
-- admissionReviewVersions:
-  - v1beta1
-  clientConfig:
-    service:
-      name: webhook-service
-      namespace: system
-      path: /mutate-coral-ctx-sh-v1beta1-mirror
-  failurePolicy: Fail
-  name: mmirror.coral.ctx.sh
-  rules:
-  - apiGroups:
-    - coral.ctx.sh
-    apiVersions:
-    - v1beta1
-    operations:
-    - CREATE
-    - UPDATE
-    resources:
-    - mirrors
   sideEffects: None
 ---
 apiVersion: admissionregistration.k8s.io/v1
@@ -60,35 +39,16 @@ webhooks:
       namespace: system
       path: /validate-coral-ctx-sh-v1beta1-imagesync
   failurePolicy: Fail
+  matchPolicy: Equivalent
   name: vimagesync.coral.ctx.sh
   rules:
   - apiGroups:
     - coral.ctx.sh
     apiVersions:
-    - v1beta1
+    - v1
     operations:
     - CREATE
     - UPDATE
     resources:
     - imagesyncs
-  sideEffects: None
-- admissionReviewVersions:
-  - v1beta1
-  clientConfig:
-    service:
-      name: webhook-service
-      namespace: system
-      path: /validate-coral-ctx-sh-v1beta1-mirror
-  failurePolicy: Fail
-  name: vmirror.coral.ctx.sh
-  rules:
-  - apiGroups:
-    - coral.ctx.sh
-    apiVersions:
-    - v1beta1
-    operations:
-    - CREATE
-    - UPDATE
-    resources:
-    - mirrors
   sideEffects: None

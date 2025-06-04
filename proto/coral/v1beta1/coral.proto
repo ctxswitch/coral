@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package coral.v1beta1;
+
+option go_package = "ctx.sh/coral/pkg/gen/coral/v1beta1;coralv1beta1";
+
+message ReporterRequest {
+  repeated string image = 1;
+  string node = 2;
+  string node_labels = 3;
+}
+
+message ReporterResponse {
+  string message = 1;
+  ReporterStatus status = 2;
+}
+
+enum ReporterStatus {
+  UNKNOWN = 0;
+  OK = 1;
+  RETRYABLE_ERROR = 2;
+  FATAL_ERROR = 3;
+}
+
+service CoralService {
+  rpc Reporter(ReporterRequest) returns (ReporterResponse) {}
+}

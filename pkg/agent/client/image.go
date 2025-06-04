@@ -1,4 +1,4 @@
-package image
+package client
 
 import (
 	"context"
@@ -73,40 +73,37 @@ func (c *Client) Connect(ctx context.Context, addr string) error {
 	return nil
 }
 
-func (c *Client) Pull(ctx context.Context, uid, name string, auth []*crun.AuthConfig) (Info, error) {
-	log := ctrl.LoggerFrom(ctx, "image", name)
+func (c *Client) Pull(ctx context.Context, fqn string, auth []*crun.AuthConfig) error {
+	log := ctrl.LoggerFrom(ctx, "image", fqn)
 
 	if len(auth) == 0 {
-		err := c.pull(ctx, name, nil)
-		if err != nil {
-			return Info{}, err
-		}
-		return c.status(ctx, name)
+		return c.pull(ctx, fqn, nil)
 	}
 
-	if auth, ok := c.authCache[uid]; ok {
-		err := c.pull(ctx, name, auth)
-		if err == nil {
-			return c.status(ctx, name)
+	// TODO: This could cross cache boundaries for the imagesync images causing confusion.  I
+	//   was using the imagesync uid, but I don't think the client should be aware of that.
+	if auth, ok := c.authCache[fqn]; ok {
+		err := c.pull(ctx, fqn, auth)
+		if err != nil {
+			return err
 		}
 
 		log.V(4).Info("failed to pull image with cached credentials")
-		delete(c.authCache, uid)
+		delete(c.authCache, fqn)
 	}
 
 	for _, a := range auth {
 		log.V(4).Info("attempting to pull image with provided credentials")
-		err := c.pull(ctx, name, a)
-		if err != nil {
-			continue
-		} else {
-			c.authCache[uid] = a
-			return c.status(ctx, name)
+		err := c.pull(ctx, fqn, a)
+		if err == nil {
+			log.V(3).Info("successfully pulled image with provided credentials")
+			c.authCache[fqn] = a
+			return nil
 		}
 	}
 
-	log.Error(nil, "failed to pull image with provided credentials", "image", name)
-	return Info{}, ErrUnauthorized
+	log.Error(nil, "failed to pull image with provided credentials")
+	return ErrUnauthorized
 }
 
 func (c *Client) Delete(ctx context.Context, uid, name string) (Info, error) {
@@ -125,6 +122,23 @@ func (c *Client) Delete(ctx context.Context, uid, name string) (Info, error) {
 
 func (c *Client) Status(ctx context.Context, name string) (Info, error) {
 	return c.status(ctx, name)
+}
+
+func (c *Client) List(ctx context.Context) ([]string, error) {
+	c.Lock()
+	defer c.Unlock()
+
+	resp, err := c.isc.ListImages(ctx, &crun.ListImagesRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	images := make([]string, 0)
+	for _, img := range resp.GetImages() {
+		images = append(images, img.GetRepoTags()...)
+	}
+
+	return images, nil
 }
 
 func (c *Client) pull(ctx context.Context, name string, auth *crun.AuthConfig) (err error) {

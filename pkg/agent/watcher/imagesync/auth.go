@@ -12,7 +12,7 @@ type Auth struct {
 }
 
 func NewAuth(pullSecrets []corev1.Secret) (*Auth, error) {
-	defaultKeyring := credentialprovider.NewDockerKeyring()
+	defaultKeyring := credentialprovider.NewDefaultDockerKeyring()
 	keyring, err := secrets.MakeDockerKeyring(pullSecrets, defaultKeyring)
 	if err != nil {
 		return nil, err
@@ -40,10 +40,10 @@ func (a *Auth) Lookup(name string) []*runtime.AuthConfig {
 	return runtimeAuth
 }
 
-func (a *Auth) authLookup(name string) []credentialprovider.AuthConfig {
+func (a *Auth) authLookup(name string) []credentialprovider.TrackedAuthConfig {
 	auth, found := a.keyring.Lookup(name)
 	if !found {
-		return []credentialprovider.AuthConfig{}
+		return []credentialprovider.TrackedAuthConfig{}
 	}
 
 	return auth

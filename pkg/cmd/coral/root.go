@@ -78,7 +78,10 @@ func ControllerCommand() *cobra.Command {
 		RunE:  c.RunE,
 	}
 
-	cmd.PersistentFlags().StringVarP(&c.Certs, "certs", "c", DefaultCertDir, "specify the webhooks certs directory")
+	cmd.PersistentFlags().StringVarP(&c.CertDir, "cert-dir", "", DefaultCertDir, "specify the webhooks certs directory")
+	cmd.PersistentFlags().StringVarP(&c.CertName, "cert", "", DefaultCertName, "specify the certificate file name")
+	cmd.PersistentFlags().StringVarP(&c.KeyName, "key", "", DefaultKeyName, "specify the key file name")
+	cmd.PersistentFlags().StringVarP(&c.CACertName, "cacert", "", DefaultCACertName, "specify the ca certificate file name")
 	cmd.PersistentFlags().BoolVarP(&c.LeaderElection, "enable-leader-election", "", DefaultEnableLeaderElection, "enable leader election")
 	cmd.PersistentFlags().BoolVarP(&c.SkipInsecureVerify, "skip-insecure-verify", "", DefaultSkipInsecureVerify, "skip certificate verification for the webhooks")
 	cmd.PersistentFlags().Int8VarP(&c.LogLevel, "log-level", "", DefaultLogLevel, "set the log level (integer value)")
@@ -95,6 +98,12 @@ func AgentCommand() *cobra.Command {
 		RunE:  a.RunE,
 	}
 
+	cmd.PersistentFlags().StringVarP(&a.Host, "coral-host", "H", DefaultCoralHost, "set the coral host URL")
+	cmd.PersistentFlags().StringVarP(&a.CertDir, "cert-dir", "", DefaultCertDir, "specify the webhooks certs directory")
+	cmd.PersistentFlags().StringVarP(&a.CertName, "cert", "", DefaultCertName, "specify the certificate file name")
+	cmd.PersistentFlags().StringVarP(&a.KeyName, "key", "", DefaultKeyName, "specify the key file name")
+	cmd.PersistentFlags().StringVarP(&a.ClientCAName, "cacert", "", DefaultCACertName, "specify the client CA file name")
+	cmd.PersistentFlags().BoolVarP(&a.SkipInsecureVerify, "skip-insecure-verify", "", DefaultSkipInsecureVerify, "skip certificate verification")
 	cmd.PersistentFlags().Int8VarP(&a.LogLevel, "log-level", "v", DefaultLogLevel, "set the log level (integer value)")
 	cmd.PersistentFlags().StringVarP(&a.ContainerdAddr, "containerd-addr", "A", DefaultContainerdAddr, "set the containerd address")
 	cmd.PersistentFlags().IntVarP(&a.MaxConcurrentReconcilers, "max-concurrent-reconcilers", "", DefaultMaxConcurrentReconcilers, "set the max concurrency for resource reconciliation")

@@ -18,8 +18,9 @@ import (
 	"context"
 	"time"
 
+	"ctx.sh/coral/pkg/store"
+
 	coralv1beta1 "ctx.sh/coral/pkg/apis/coral.ctx.sh/v1beta1"
-	"ctx.sh/coral/pkg/util"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
@@ -32,26 +33,29 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
+type Options struct {
+	NodeRef *store.NodeRef
+}
+
 type Controller struct {
-	Cache         cache.Cache
-	Scheme        *runtime.Scheme
-	Recorder      record.EventRecorder
-	StatusUpdater *StatusUpdater
+	Cache    cache.Cache
+	Scheme   *runtime.Scheme
+	Recorder record.EventRecorder
 	client.Client
 }
 
-func SetupWithManager(mgr ctrl.Manager) error {
-	s := &StatusUpdater{
-		Client: mgr.GetClient(),
+func SetupWithManager(mgr ctrl.Manager, opts *Options) error {
+	if err := mgr.Add(NewStatusUpdater(mgr.GetClient(), opts.NodeRef)); err != nil {
+		return err
 	}
 
 	c := &Controller{
-		Cache:         mgr.GetCache(),
-		Client:        mgr.GetClient(),
-		Scheme:        mgr.GetScheme(),
-		Recorder:      mgr.GetEventRecorderFor("imagesync-controller"),
-		StatusUpdater: s,
+		Cache:    mgr.GetCache(),
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor("imagesync-controller"),
 	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&coralv1beta1.ImageSync{}).
 		WithEventFilter(predicate.GenerationChangedPredicate{}).
@@ -98,19 +102,6 @@ func (c *Controller) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{}, c.removeFinalizer(ctx, isync)
 	}
 
-	if isync.HasNotChanged() {
-		logger.V(4).Info("imagesync has not changed, skipping", "request", req)
-		return ctrl.Result{}, nil
-	}
-
-	logger.Info("imagesync has changed, updating", "request", req)
-
-	// Update status first since we use the status blocks to keep track of the label mapping.
-	if err := c.updateStatus(ctx, isync); err != nil {
-		logger.Error(err, "unable to update imagesync status", "request", req)
-		return ctrl.Result{}, err
-	}
-
 	return ctrl.Result{}, nil
 }
 
@@ -142,24 +133,4 @@ func (c *Controller) finalize(ctx context.Context, isync *coralv1beta1.ImageSync
 	// TODO: I'm not currently using the finalizers, but it does trigger an update event
 	//   with the deletion time set that the agents can catch for cleanup.
 	return nil
-}
-
-func (c *Controller) generateImageLabelMap(_ context.Context, imageSync *coralv1beta1.ImageSync) []coralv1beta1.ImageSyncImage {
-	images := make([]coralv1beta1.ImageSyncImage, 0)
-	for _, image := range imageSync.Spec.Images {
-		fqn := util.GetImageQualifiedName(util.DefaultSearchRegistry, image)
-		ref := util.GetImageLabelValue(fqn)
-		images = append(images, coralv1beta1.ImageSyncImage{
-			Name:      image,
-			Image:     fqn,
-			Reference: ref,
-		})
-	}
-	return images
-}
-
-func (c *Controller) updateStatus(ctx context.Context, isync *coralv1beta1.ImageSync) error {
-	isync.Status.Images = c.generateImageLabelMap(ctx, isync)
-	isync.Status.Revision = isync.GetRevisionHash()
-	return c.Status().Update(ctx, isync)
 }
