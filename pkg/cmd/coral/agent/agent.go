@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"crypto/tls"
 	"os"
 	"time"
 
@@ -27,6 +28,12 @@ type Agent struct {
 	LogLevel                 int8
 	MaxConcurrentReconcilers int
 	MaxConcurrentPullers     int
+	Host                     string
+	CertDir                  string
+	CertName                 string
+	KeyName                  string
+	SkipInsecureVerify       bool
+	ClientCAName             string
 }
 
 func (a *Agent) RunE(cmd *cobra.Command, args []string) error {
@@ -66,8 +73,18 @@ func (a *Agent) RunE(cmd *cobra.Command, args []string) error {
 	}
 
 	if err = reporter.SetupWithManager(ctx, mgr, &reporter.Options{
-		ContainerAddr: a.ContainerdAddr,
-		NodeName:      nodeName,
+		ContainerAddr:      a.ContainerdAddr,
+		NodeName:           nodeName,
+		Host:               a.Host,
+		CertDir:            a.CertDir,
+		CertName:           a.CertName,
+		KeyName:            a.KeyName,
+		InsecureSkipVerify: a.SkipInsecureVerify,
+		TLSOpts: []func(*tls.Config){
+			func(config *tls.Config) {
+				config.InsecureSkipVerify = a.SkipInsecureVerify
+			},
+		},
 	}); err != nil {
 		log.Error(err, "unable to setup reporter")
 		os.Exit(1)

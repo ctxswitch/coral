@@ -205,7 +205,7 @@ localdev-clean:
 .PHONY: controller-run
 controller-run:
 	$(eval POD := $(shell kubectl get pods -n coral-system -l app=controller -o=custom-columns=:metadata.name --no-headers))
-	@$(KUBECTL) exec -n coral-system -it pod/$(POD) -- bash -c "go run pkg/cmd/coral/*.go controller --log-level=5 --skip-insecure-verify=true"
+	@$(KUBECTL) exec -n coral-system -it pod/$(POD) -- bash -c "go run pkg/cmd/coral/*.go controller --log-level=5"
 
 .PHONY: controller-exec
 controller-exec:

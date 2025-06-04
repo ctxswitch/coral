@@ -37,7 +37,10 @@ const (
 )
 
 type Controller struct {
-	Certs              string
+	CertDir            string
+	CACertName         string
+	CertName           string
+	KeyName            string
 	LeaderElection     bool
 	SkipInsecureVerify bool
 	Namespace          string
@@ -64,12 +67,10 @@ func (c *Controller) RunE(cmd *cobra.Command, args []string) error {
 
 	hookServer := webhook.NewServer(webhook.ServerOptions{
 		Port:    9443,
-		CertDir: c.Certs,
-		// TODO: One of these causes an error about 'client didn't provide a certificate'
-		// Look at these settings in more detail later.
-		// CertName:     DefaultCertName,
-		// KeyName:      DefaultKeyName,
-		// ClientCAName: DefaultClientCAName,
+		CertDir: c.CertDir,
+		// CertName:           c.CertName,
+		// KeyName:            c.KeyName,
+		// ClientCAName:       c.CACertName,
 		InsecureSkipVerify: c.SkipInsecureVerify,
 		TLSOpts: []func(*tls.Config){
 			func(config *tls.Config) {

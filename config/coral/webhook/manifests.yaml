@@ -25,34 +25,6 @@ webhooks:
     resources:
     - imagesyncs
   sideEffects: None
-- admissionReviewVersions:
-  - v1beta1
-  clientConfig:
-    service:
-      name: webhook-service
-      namespace: system
-      path: /inject-coral-ctx-sh-v1beta1-imagesync
-  failurePolicy: Ignore
-  matchPolicy: Equivalent
-  name: minjector.coral.ctx.sh
-  rules:
-  - apiGroups:
-    - apps
-    - batch
-    apiVersions:
-    - v1
-    operations:
-    - CREATE
-    - UPDATE
-    resources:
-    - cronjobs
-    - daemonsets
-    - deployments
-    - jobs
-    - replicasets
-    - replicationcontrollers
-    - statefulsets
-  sideEffects: None
 ---
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
