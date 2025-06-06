@@ -11,7 +11,7 @@ require (
 	go.uber.org/zap v1.27.0
 	golang.org/x/net v0.40.0
 	golang.org/x/sync v0.14.0
-	google.golang.org/grpc v1.72.2
+	google.golang.org/grpc v1.73.0
 	google.golang.org/protobuf v1.36.6
 	k8s.io/api v0.33.1
 	k8s.io/apimachinery v0.33.1
@@ -56,8 +56,8 @@ require (
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
-	go.opentelemetry.io/otel v1.34.0 // indirect
-	go.opentelemetry.io/otel/trace v1.34.0 // indirect
+	go.opentelemetry.io/otel v1.35.0 // indirect
+	go.opentelemetry.io/otel/trace v1.35.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
