@@ -193,8 +193,6 @@ localdev-shared:
 	@$(KUBECTL) wait --for=condition=available --timeout=120s deploy -l app.kubernetes.io/group=cert-manager -n cert-manager
 	@$(KUSTOMIZE) build config/localstack | envsubst | $(KUBECTL) apply -f -
 	@$(KUBECTL) wait --for=condition=available --timeout=120s deploy/localstack -n coral-system
-	@$(KUSTOMIZE) build config/registry | envsubst | $(KUBECTL) apply -f -
-	@$(KUBECTL) wait --for=condition=available --timeout=120s deploy/registry -n coral-system
 	@$(KUSTOMIZE) build config/coral/overlays/$(ENV) | envsubst | $(KUBECTL) apply -f -
 	@$(KUBECTL) wait --for=condition=available --timeout=120s deploy/coral-controller -n coral-system
 

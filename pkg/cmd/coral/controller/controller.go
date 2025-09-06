@@ -103,8 +103,9 @@ func (c *Controller) RunE(cmd *cobra.Command, args []string) error {
 	}
 
 	// Set up webhooks
-	if err = webhook.SetupWebhooksWithManager(mgr, &webhook.Options{
-		NodeRef: nodeRef,
+	if err = webhook.SetupWebhooksWithManager(ctx, mgr, &webhook.Options{
+		RegistryPort: 5000,
+		NodeRef:      nodeRef,
 	}); err != nil {
 		log.Error(err, "unable to setup webhooks")
 		os.Exit(1)

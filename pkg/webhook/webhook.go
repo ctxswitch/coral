@@ -15,6 +15,8 @@
 package webhook
 
 import (
+	"context"
+	"ctx.sh/coral/pkg/webhook/v1beta1/registry"
 	"fmt"
 
 	"ctx.sh/coral/pkg/store"
@@ -26,7 +28,8 @@ import (
 )
 
 type Options struct {
-	NodeRef *store.NodeRef
+	RegistryPort int
+	NodeRef      *store.NodeRef
 }
 
 // +kubebuilder:webhook:verbs=create;update,path=/mutate-coral-ctx-sh-v1beta1-imagesync,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=coral.ctx.sh,resources=imagesyncs,versions=v1,name=mimagesync.coral.ctx.sh,admissionReviewVersions=v1beta1,sideEffects=none
@@ -35,7 +38,7 @@ type Options struct {
 // TODO: implement the injector for volume mounts.
 // webhook:verbs=create;update,path=/inject-coral-ctx-sh-v1beta1-imagesync,mutating=true,failurePolicy=ignore,matchPolicy=Equivalent,groups=apps;batch,resources=cronjobs;daemonsets;deployments;jobs;replicasets;replicationcontrollers;statefulsets,versions=v1,name=minjector.coral.ctx.sh,admissionReviewVersions=v1beta1,sideEffects=none
 
-func SetupWebhooksWithManager(mgr manager.Manager, opts *Options) error {
+func SetupWebhooksWithManager(ctx context.Context, mgr manager.Manager, opts *Options) error {
 	// Setup check endpoints for health and readiness
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		return fmt.Errorf("could not set up health check: %v", err)
@@ -61,6 +64,13 @@ func SetupWebhooksWithManager(mgr manager.Manager, opts *Options) error {
 		NodeRef: opts.NodeRef,
 	}); err != nil {
 		return fmt.Errorf("could not set up coral services: %v", err)
+	}
+
+	// Register the registry service
+	if err := registry.SetupWebhookWithManager(ctx, mgr, &registry.Options{
+		Port: opts.RegistryPort,
+	}); err != nil {
+		return fmt.Errorf("could not set up registry webhook: %v", err)
 	}
 
 	return nil

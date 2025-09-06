@@ -11,3 +11,4 @@ resources:
   - ../webhook
   - controller.yaml
   - agent.yaml
+  - service.yaml
