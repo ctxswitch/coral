@@ -8,6 +8,7 @@ rules:
   - coral.ctx.sh
   resources:
   - imagesyncs
+  - mirrors
   verbs:
   - create
   - delete
@@ -20,6 +21,7 @@ rules:
   - coral.ctx.sh
   resources:
   - imagesyncs/status
+  - mirrors/status
   verbs:
   - get
   - patch

@@ -5,7 +5,7 @@ export PATH := ./bin:$(PATH)
 
 CONTROLLER_TOOLS_VERSION ?= v0.16.1
 KUSTOMIZE_VERSION ?= v5.4.2
-GOLANGCI_LINT_VERSION ?= v2.1.6
+GOLANGCI_LINT_VERSION ?= v2.4.0
 GOIMPORTS_VERSION ?= latest
 ADDLICENSE_VERSION ?= v1.0.0
 MOCKERY_VERSION ?= v3.2.5
@@ -193,8 +193,6 @@ localdev-shared:
 	@$(KUBECTL) wait --for=condition=available --timeout=120s deploy -l app.kubernetes.io/group=cert-manager -n cert-manager
 	@$(KUSTOMIZE) build config/localstack | envsubst | $(KUBECTL) apply -f -
 	@$(KUBECTL) wait --for=condition=available --timeout=120s deploy/localstack -n coral-system
-	@$(KUSTOMIZE) build config/registry | envsubst | $(KUBECTL) apply -f -
-	@$(KUBECTL) wait --for=condition=available --timeout=120s deploy/registry -n coral-system
 	@$(KUSTOMIZE) build config/coral/overlays/$(ENV) | envsubst | $(KUBECTL) apply -f -
 	@$(KUBECTL) wait --for=condition=available --timeout=120s deploy/coral-controller -n coral-system
 

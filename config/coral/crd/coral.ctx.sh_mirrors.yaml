@@ -36,6 +36,8 @@ spec:
             type: object
           spec:
             properties:
+              copyAllArchitectures:
+                type: boolean
               imagePullSecrets:
                 items:
                   properties:
@@ -50,10 +52,8 @@ spec:
                 items:
                   type: string
                 type: array
-              localRegistry:
-                type: string
             required:
-            - localRegistry
+            - images
             type: object
           status:
             properties:

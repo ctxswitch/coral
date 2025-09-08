@@ -1,4 +1,4 @@
-apiVersion: k3d.io/v1alpha4
+apiVersion: k3d.io/v1alpha5
 kind: Simple 
 metadata:
   name: coral
@@ -7,6 +7,9 @@ agents: 1
 image: rancher/k3s:v1.28.12-k3s1
 ports:
   - port: 9000:30100
+    nodeFilters:
+      - agent:*
+  - port: 8000:30500
     nodeFilters:
       - agent:*
 options:

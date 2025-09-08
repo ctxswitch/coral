@@ -1,0 +1,10 @@
+apiVersion: coral.ctx.sh/v1beta1
+kind: Mirror
+metadata:
+  name: nginx
+  namespace: coral-system
+spec:
+  images:
+    - nginx:alpine3.22
+    - golang:1.25
+    - gcr.io/kaniko-project/executor

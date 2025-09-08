@@ -12,18 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package imagesync
+package mirror
 
-type WatchError string
-
-func (e WatchError) Error() string {
-	return string(e)
-}
-
-const (
-	ErrNodeNotFound        WatchError = "node not found"
-	ErrNodeNotReady        WatchError = "node not ready"
-	ErrNodeMatch           WatchError = "node does not match match"
-	ErrImageSyncNotFound   WatchError = "imagesync notfound"
-	ErrPullSecretsNotFound WatchError = "pull secrets not found"
+import (
+	"github.com/prometheus/client_golang/prometheus"
+	"sigs.k8s.io/controller-runtime/pkg/metrics"
 )
+
+var (
+	observerError = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "coral_mirror_controller_observer_error",
+			Help: "The number of errors that occurred while observing the state of a mirror.",
+		},
+		[]string{"name", "namespace"},
+	)
+)
+
+func init() {
+	metrics.Registry.MustRegister(observerError)
+}

@@ -19,7 +19,7 @@
 package v1beta1
 
 import (
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -237,6 +237,11 @@ func (in *MirrorSpec) DeepCopyInto(out *MirrorSpec) {
 		in, out := &in.Images, &out.Images
 		*out = make([]string, len(*in))
 		copy(*out, *in)
+	}
+	if in.CopyAllArchitectures != nil {
+		in, out := &in.CopyAllArchitectures, &out.CopyAllArchitectures
+		*out = new(bool)
+		**out = **in
 	}
 }
 
