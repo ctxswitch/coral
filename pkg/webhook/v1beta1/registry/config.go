@@ -2,12 +2,13 @@ package registry
 
 import (
 	"fmt"
+
 	"github.com/distribution/distribution/v3/configuration"
 )
 
 type Configuration configuration.Configuration
 
-// NewConfiguration creates a new storage configurator
+// NewConfiguration creates a new storage configurator.
 func NewConfiguration(options *Options) *Configuration {
 	config := &Configuration{}
 	config = config.WithLogConfiguration(options).
@@ -89,7 +90,7 @@ func (c *Configuration) WithStorageConfiguration(options *Options) *Configuratio
 	return c
 }
 
-// buildS3Configuration creates S3-specific storage configuration with validation
+// buildS3Configuration creates S3-specific storage configuration with validation.
 func (c *Configuration) WithS3StorageConfiguration(options *Options) configuration.Parameters {
 	// Set sensible defaults for S3 if not provided
 	cfg := configuration.Parameters{

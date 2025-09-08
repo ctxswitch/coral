@@ -18,7 +18,7 @@ package v1beta1
 
 import (
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 )
 
 // +kubebuilder:docs-gen:collapse=Go imports
@@ -31,7 +31,7 @@ func defaultedImageSync(obj *ImageSync) {
 
 func defaultedMirrorSpec(obj *MirrorSpec) {
 	if obj.CopyAllArchitectures == nil {
-		obj.CopyAllArchitectures = pointer.BoolPtr(false)
+		obj.CopyAllArchitectures = ptr.To(false)
 	}
 }
 

@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
-	"sigs.k8s.io/controller-runtime/pkg/certwatcher"
 	"time"
+
+	"sigs.k8s.io/controller-runtime/pkg/certwatcher"
 
 	"k8s.io/apimachinery/pkg/util/wait"
 

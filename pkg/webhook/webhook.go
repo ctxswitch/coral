@@ -16,8 +16,9 @@ package webhook
 
 import (
 	"context"
-	"ctx.sh/coral/pkg/webhook/v1beta1/registry"
 	"fmt"
+
+	"ctx.sh/coral/pkg/webhook/v1beta1/registry"
 
 	"ctx.sh/coral/pkg/store"
 	coral "ctx.sh/coral/pkg/webhook/v1beta1/coral"

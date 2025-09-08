@@ -25,7 +25,7 @@ type Options struct {
 	HealthCheckThreshold  int
 }
 
-// setDefaults applies default values to options that aren't explicitly configured
+// setDefaults applies default values to options that aren't explicitly configured.
 func (o *Options) setDefaults() {
 	if o.StorageDriver == "" {
 		o.StorageDriver = "inmemory"

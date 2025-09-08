@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"sync"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/distribution/distribution/v3/registry"
 	_ "github.com/distribution/distribution/v3/registry/storage/driver/inmemory"
@@ -23,7 +23,6 @@ import (
 type Registry struct {
 	Options  *Options
 	registry *registry.Registry
-	server   *http.Server
 	mu       sync.RWMutex
 }
 
@@ -50,16 +49,11 @@ func (r *Registry) Start(ctx context.Context) error {
 	r.Options.setDefaults()
 
 	config := NewConfiguration(r.Options)
-	y, err := yaml.Marshal(config.RegistryConfig())
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(y))
 
 	log.Info("starting registry service")
 
 	if !r.Options.EnableRegistryLogging {
-		logrus.SetOutput(ioutil.Discard)
+		logrus.SetOutput(io.Discard)
 	}
 
 	// Create the distribution registry
@@ -97,7 +91,7 @@ func (r *Registry) Start(ctx context.Context) error {
 	}
 }
 
-// shutdown gracefully shuts down the registry service
+// shutdown gracefully shuts down the registry service.
 func (r *Registry) shutdown(log logr.Logger) error {
 	log.Info("initiating graceful shutdown of registry service")
 

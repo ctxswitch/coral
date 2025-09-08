@@ -31,13 +31,14 @@ func SetupWithManager(mgr ctrl.Manager, opts *Options) (err error) {
 	if err = imagesync.SetupWithManager(mgr, &imagesync.Options{
 		NodeRef: opts.NodeRef,
 	}); err != nil {
-		return
+		return err
 	}
 
 	if err = mirror.SetupWithManager(mgr, &mirror.Options{
 		Registry: "localhost:5000",
 	}); err != nil {
+		return err
 	}
 
-	return
+	return err
 }

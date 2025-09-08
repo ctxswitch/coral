@@ -2,15 +2,16 @@ package mirror
 
 import (
 	"context"
+	"fmt"
+	goruntime "runtime"
+
 	utilauth "ctx.sh/coral/pkg/agent/watcher/imagesync"
 	"ctx.sh/coral/pkg/util"
-	"fmt"
 	"github.com/containers/image/v5/copy"
 	"github.com/containers/image/v5/docker"
 	"github.com/containers/image/v5/signature"
 	"github.com/containers/image/v5/types"
 	corev1 "k8s.io/api/core/v1"
-	goruntime "runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -34,9 +35,7 @@ func (s *Synchronizer) WithDestinationRegistry(dst string) *Synchronizer {
 }
 
 func (s *Synchronizer) WithImagePullSecrets(secrets []corev1.Secret) *Synchronizer {
-	for _, secret := range secrets {
-		s.secrets = append(s.secrets, secret)
-	}
+	s.secrets = append(s.secrets, secrets...)
 	return s
 }
 
@@ -61,15 +60,8 @@ func (s *Synchronizer) Copy(ctx context.Context, image string) error {
 	}
 
 	// Create system context
-	srcCtx, err := s.createSystemContext(ctx, srcImage, authProvider)
-	if err != nil {
-		return fmt.Errorf("failed to create system context: %w", err)
-	}
-
-	dstCtx, err := s.createSystemContext(ctx, dstImage, authProvider)
-	if err != nil {
-		return fmt.Errorf("failed to create system context: %w", err)
-	}
+	srcCtx := s.createSystemContext(ctx, srcImage, authProvider)
+	dstCtx := s.createSystemContext(ctx, dstImage, authProvider)
 
 	// Create source image reference
 	srcRef, err := docker.ParseReference("//" + srcImage)
@@ -91,9 +83,7 @@ func (s *Synchronizer) Copy(ctx context.Context, image string) error {
 		return fmt.Errorf("failed to create policy context: %w", err)
 	}
 	defer func() {
-		if err := policyCtx.Destroy(); err != nil {
-			logger.Error(err, "failed to destroy policy context")
-		}
+		_ = policyCtx.Destroy()
 	}()
 
 	// Determine image list selection based on configuration
@@ -123,8 +113,8 @@ func (s *Synchronizer) Copy(ctx context.Context, image string) error {
 	return nil
 }
 
-// createSystemContext creates a system context for containers/image operations
-func (s *Synchronizer) createSystemContext(ctx context.Context, image string, authProvider *utilauth.Auth) (*types.SystemContext, error) {
+// createSystemContext creates a system context for containers/image operations.
+func (s *Synchronizer) createSystemContext(ctx context.Context, image string, authProvider *utilauth.Auth) *types.SystemContext {
 	logger := ctrl.LoggerFrom(ctx)
 
 	systemCtx := &types.SystemContext{
@@ -153,5 +143,5 @@ func (s *Synchronizer) createSystemContext(ctx context.Context, image string, au
 		}
 	}
 
-	return systemCtx, nil
+	return systemCtx
 }

@@ -2,9 +2,10 @@ package mirror
 
 import (
 	"context"
+	"time"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"time"
 
 	coralv1beta1 "ctx.sh/coral/pkg/apis/coral.ctx.sh/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
