@@ -26,8 +26,7 @@ func (c *Configuration) WithLogConfiguration(options *Options) *Configuration {
 		Fields: map[string]interface{}{
 			"service": "coral-registry",
 		},
-		// TODO(rob): make me configurable
-		Level: "info",
+		Level: configuration.Loglevel(options.LogLevel),
 	}
 
 	return c

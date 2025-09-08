@@ -32,6 +32,36 @@ func GetImageQualifiedName(search, image string) string {
 	return name
 }
 
+func ExtractImageHostname(image string) string {
+	parts := strings.Split(image, "/")
+	if len(parts) == 1 {
+		return DefaultSearchRegistry
+	}
+
+	// Check if the first part looks like a hostname (contains . or :)
+	firstPart := parts[0]
+	if strings.Contains(firstPart, ".") || strings.Contains(firstPart, ":") {
+		return firstPart
+	}
+
+	return DefaultSearchRegistry
+}
+
+func ExtractImageName(image string) string {
+	parts := strings.SplitN(image, "/", 2)
+	if len(parts) == 1 {
+		return parts[0]
+	}
+
+	imageName := parts[1]
+	// Handle case where image doesn't have a tag
+	if !strings.Contains(imageName, ":") {
+		imageName += ":latest"
+	}
+
+	return imageName
+}
+
 func GetImageLabelValue(image string) string {
 	md5Hash := md5.Sum([]byte(image)) // #nosec G401
 	return hex.EncodeToString(md5Hash[:])

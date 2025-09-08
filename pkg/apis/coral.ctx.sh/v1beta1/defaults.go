@@ -18,6 +18,7 @@ package v1beta1
 
 import (
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/pointer"
 )
 
 // +kubebuilder:docs-gen:collapse=Go imports
@@ -28,7 +29,15 @@ func defaultedImageSync(obj *ImageSync) {
 	defaultedImageSyncSpec(&obj.Spec)
 }
 
-func defaultedMirror(obj *Mirror) {}
+func defaultedMirrorSpec(obj *MirrorSpec) {
+	if obj.CopyAllArchitectures == nil {
+		obj.CopyAllArchitectures = pointer.BoolPtr(false)
+	}
+}
+
+func defaultedMirror(obj *Mirror) {
+	defaultedMirrorSpec(&obj.Spec)
+}
 
 // Defaulted sets the resource defaults.
 func Defaulted(obj runtime.Object) {

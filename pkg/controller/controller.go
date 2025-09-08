@@ -16,6 +16,7 @@ package controller
 
 import (
 	"ctx.sh/coral/pkg/controller/imagesync"
+	"ctx.sh/coral/pkg/controller/mirror"
 	"ctx.sh/coral/pkg/store"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
@@ -31,6 +32,11 @@ func SetupWithManager(mgr ctrl.Manager, opts *Options) (err error) {
 		NodeRef: opts.NodeRef,
 	}); err != nil {
 		return
+	}
+
+	if err = mirror.SetupWithManager(mgr, &mirror.Options{
+		Registry: "localhost:5000",
+	}); err != nil {
 	}
 
 	return

@@ -139,17 +139,18 @@ type ImageSyncStatus struct {
 }
 
 type MirrorSpec struct {
-	// +required
-	// LocalRegistry is the url to the local registry
-	LocalRegistry string `json:"localRegistry,omitempty"`
 	// +optional
 	// +nullable
 	// ImagePullSecrets is a list of secrets to use when pulling the image.
 	ImagePullSecrets []corev1.LocalObjectReference `json:"imagePullSecrets"`
-	// +optional
+	// +required
 	// Images is a list of images and tags that will be mirrored.  It is in the form
 	// of <registry>/<image>:tag.
 	Images []string `json:"images,omitempty"`
+	// +optional
+	// CopyAllArchitectures determines whether to copy all available architectures (true)
+	// or only the system architecture (false). Defaults to true for multi-arch support.
+	CopyAllArchitectures *bool `json:"copyAllArchitectures,omitempty"`
 }
 
 // +genclient

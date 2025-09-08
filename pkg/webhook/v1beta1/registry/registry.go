@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
+	"io/ioutil"
 	"net/http"
 	"sync"
 
@@ -54,10 +56,11 @@ func (r *Registry) Start(ctx context.Context) error {
 	}
 	fmt.Println(string(y))
 
-	log.Info("starting registry service",
-		"port", r.Options.Port,
-		"storageDriver", r.Options.StorageDriver,
-		"logFormat", r.Options.LogFormat)
+	log.Info("starting registry service")
+
+	if !r.Options.EnableRegistryLogging {
+		logrus.SetOutput(ioutil.Discard)
+	}
 
 	// Create the distribution registry
 	reg, err := registry.NewRegistry(ctx, config.RegistryConfig())

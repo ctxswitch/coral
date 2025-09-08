@@ -8,6 +8,8 @@ type Options struct {
 	StorageDriver         string
 	StorageConfig         map[string]interface{}
 	LogFormat             string
+	LogLevel              string
+	EnableRegistryLogging bool
 	EnableAccessLog       bool
 	DrainTimeout          time.Duration
 	EnableHTTP2           bool
@@ -33,6 +35,9 @@ func (o *Options) setDefaults() {
 	}
 	if o.LogFormat == "" {
 		o.LogFormat = "json"
+	}
+	if o.LogLevel == "" {
+		o.LogLevel = "info"
 	}
 	if o.DrainTimeout == 0 {
 		o.DrainTimeout = 10 * time.Second
