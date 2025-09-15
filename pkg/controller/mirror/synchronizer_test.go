@@ -222,7 +222,7 @@ func TestSynchronizer_createSystemContext(t *testing.T) {
 	}
 }
 
-// Test error cases that don't require actual image operations
+// Test error cases that don't require actual image operations.
 func TestSynchronizer_Copy_ValidationErrors(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -232,10 +232,8 @@ func TestSynchronizer_Copy_ValidationErrors(t *testing.T) {
 		errorContains string
 	}{
 		{
-			name: "missing destination registry",
-			setupSync: func() *Synchronizer {
-				return NewSynchronizer()
-			},
+			name:          "missing destination registry",
+			setupSync:     NewSynchronizer,
 			image:         "nginx",
 			expectError:   true,
 			errorContains: "", // This will fail at docker.ParseReference due to empty dst

@@ -245,5 +245,5 @@ func (s *ControllerTestSuite) TestController_Reconcile_NeedsFinalizer() {
 
 	// Should requeue to add finalizer
 	s.NoError(err)
-	s.True(result.Requeue)
+	s.True(result.Requeue) // nolint:staticcheck
 }

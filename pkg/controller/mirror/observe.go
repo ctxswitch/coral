@@ -49,12 +49,12 @@ func (o *StateObserver) observe(ctx context.Context, observed *ObservedState) er
 	if err != nil {
 		return err
 	}
-	
+
 	// If mirror is not found, there's nothing to observe
 	if observedMirror == nil {
 		return nil
 	}
-	
+
 	coralctxshv1beta1.Defaulted(observedMirror)
 	observed.Mirror = observedMirror
 
