@@ -31,3 +31,5 @@ config/overlays/dev/*-webhooks.yaml
 
 # Editor files
 .idea
+
+.claude
