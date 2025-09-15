@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: Node
+metadata:
+  name: node1
+  labels:
+    env: prod
+spec:
+  providerID: kind://docker/coral/node1
+status:
+  conditions:
+    - status: "False"
+      type: MemoryPressure
+    - status: "False"
+      type: DiskPressure
+    - status: "False"
+      type: PIDPressure
+    - status: "True"
+      type: Ready
+---
+apiVersion: v1
+kind: Node
+metadata:
+  name: node2
+  labels:
+    env: prod
+spec:
+  providerID: kind://docker/coral/node2
+status:
+  conditions:
+    - status: "False"
+      type: MemoryPressure
+    - status: "False"
+      type: DiskPressure
+    - status: "False"
+      type: PIDPressure
+    - status: "True"
+      type: Ready
+---
+apiVersion: v1
+kind: Node
+metadata:
+  name: node-dev
+  labels:
+    env: dev
+spec:
+  providerID: kind://docker/coral/node-dev
+status:
+  conditions:
+    - status: "False"
+      type: MemoryPressure
+    - status: "False"
+      type: DiskPressure
+    - status: "False"
+      type: PIDPressure
+    - status: "True"
+      type: Ready

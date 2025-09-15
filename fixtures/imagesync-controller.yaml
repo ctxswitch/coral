@@ -1,0 +1,60 @@
+apiVersion: coral.ctx.sh/v1beta1
+kind: ImageSync
+metadata:
+  name: test-imagesync
+  namespace: default
+  finalizers:
+    - imagesync.coral.ctx.sh/finalizer
+spec:
+  images:
+    - nginx:latest
+---
+apiVersion: coral.ctx.sh/v1beta1
+kind: ImageSync
+metadata:
+  name: test-imagesync-no-finalizer
+  namespace: default
+spec:
+  images:
+    - nginx:latest
+---
+apiVersion: coral.ctx.sh/v1beta1
+kind: ImageSync
+metadata:
+  name: test-imagesync-deleted
+  namespace: default
+  finalizers:
+    - imagesync.coral.ctx.sh/finalizer
+  deletionTimestamp: "2025-01-01T00:00:00Z"
+spec:
+  images:
+    - nginx:latest
+---
+apiVersion: coral.ctx.sh/v1beta1
+kind: ImageSync
+metadata:
+  name: test-imagesync-multi-image
+  namespace: default
+spec:
+  images:
+    - nginx:latest
+    - redis:latest
+  nodeSelector:
+    - key: env
+      operator: in
+      values:
+        - prod
+---
+apiVersion: coral.ctx.sh/v1beta1
+kind: ImageSync
+metadata:
+  name: test-imagesync-no-matching-nodes
+  namespace: default
+spec:
+  images:
+    - nginx:latest
+  nodeSelector:
+    - key: env
+      operator: in
+      values:
+        - prod

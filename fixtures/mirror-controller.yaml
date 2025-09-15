@@ -1,0 +1,32 @@
+apiVersion: coral.ctx.sh/v1beta1
+kind: Mirror
+metadata:
+  name: test-mirror
+  namespace: default
+  finalizers:
+    - mirror.coral.ctx.sh/finalizer
+spec:
+  images:
+    - nginx:latest
+    - redis:latest
+---
+apiVersion: coral.ctx.sh/v1beta1
+kind: Mirror
+metadata:
+  name: test-mirror-no-finalizer
+  namespace: default
+spec:
+  images:
+    - nginx:latest
+---
+apiVersion: coral.ctx.sh/v1beta1
+kind: Mirror
+metadata:
+  name: test-mirror-deleted
+  namespace: default
+  finalizers:
+    - mirror.coral.ctx.sh/finalizer
+  deletionTimestamp: "2025-01-01T00:00:00Z"
+spec:
+  images:
+    - nginx:latest
