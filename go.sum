@@ -500,8 +500,8 @@ k8s.io/controller-manager v0.34.1 h1:c9Cmun/zF740kmdRQWPGga+4MglT5SlrwsCXDS/KtJI
 k8s.io/controller-manager v0.34.1/go.mod h1:fGiJDhi3OSzSAB4f40ZkJLAqMQSag9RM+7m5BRhBO3Q=
 k8s.io/cri-api v0.34.1 h1:n2bU++FqqJq0CNjP/5pkOs0nIx7aNpb1Xa053TecQkM=
 k8s.io/cri-api v0.34.1/go.mod h1:4qVUjidMg7/Z9YGZpqIDygbkPWkg3mkS1PvOx/kpHTE=
-k8s.io/cri-client v0.33.1 h1:vf7mTWzoEevzn5djCroiFcSeh3SjPHQLYxf7MfKaD/s=
-k8s.io/cri-client v0.33.1/go.mod h1:bvAESUt8opvWLr8tzF4DG2GvZI9lSu6t9sCsqwJdpKE=
+k8s.io/cri-client v0.34.1 h1:eq6FcEPDDL379w0WhPnItj2egsMZqOtU7nv1JaJmwP0=
+k8s.io/cri-client v0.34.1/go.mod h1:Dq6mKWV2ugO5tMv4xqVgcQ8vD7csP//e4KkzcFi2Pio=
 k8s.io/klog/v2 v2.130.1 h1:n9Xl7H1Xvksem4KFG4PYbdQCQxqc/tTUyrgXaOhHSzk=
 k8s.io/klog/v2 v2.130.1/go.mod h1:3Jpz1GvMt720eyJH1ckRHK1EDfpxISzJ7I9OYgaDtPE=
 k8s.io/kube-openapi v0.0.0-20250710124328-f3f2b991d03b h1:MloQ9/bdJyIu9lb1PzujOPolHyvO06MXG5TUIj2mNAA=
