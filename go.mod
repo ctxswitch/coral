@@ -1,6 +1,6 @@
 module ctx.sh/coral
 
-go 1.24.0
+go 1.25.0
 
 require (
 	connectrpc.com/connect v1.19.1
@@ -19,7 +19,7 @@ require (
 	k8s.io/api v0.34.3
 	k8s.io/apimachinery v0.34.3
 	k8s.io/client-go v0.34.3
-	k8s.io/cri-api v0.34.3
+	k8s.io/cri-api v0.35.0
 	k8s.io/cri-client v0.34.3
 	k8s.io/kubernetes v1.34.3
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397
