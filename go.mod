@@ -1,6 +1,6 @@
 module ctx.sh/coral
 
-go 1.25.0
+go 1.26.0
 
 require (
 	connectrpc.com/connect v1.19.2
@@ -15,11 +15,11 @@ require (
 	golang.org/x/net v0.53.0
 	golang.org/x/sync v0.20.0
 	google.golang.org/grpc v1.80.0
-	google.golang.org/protobuf v1.36.11
+	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af
 	k8s.io/api v0.35.4
 	k8s.io/apimachinery v0.35.4
 	k8s.io/client-go v0.35.4
-	k8s.io/cri-api v0.35.4
+	k8s.io/cri-api v0.36.0
 	k8s.io/cri-client v0.35.4
 	k8s.io/kubernetes v1.35.3
 	k8s.io/utils v0.0.0-20251002143259-bc988d571ff4
