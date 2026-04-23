@@ -17,12 +17,12 @@ require (
 	google.golang.org/grpc v1.80.0
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af
 	k8s.io/api v0.35.4
-	k8s.io/apimachinery v0.35.4
+	k8s.io/apimachinery v0.36.0
 	k8s.io/client-go v0.35.4
 	k8s.io/cri-api v0.36.0
 	k8s.io/cri-client v0.35.4
 	k8s.io/kubernetes v1.35.3
-	k8s.io/utils v0.0.0-20251002143259-bc988d571ff4
+	k8s.io/utils v0.0.0-20260210185600-b8788abfbbc2
 	sigs.k8s.io/controller-runtime v0.23.3
 )
 
@@ -66,7 +66,6 @@ require (
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/btree v1.1.3 // indirect
 	github.com/google/gnostic-models v0.7.0 // indirect
-	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/go-containerregistry v0.20.3 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/handlers v1.5.2 // indirect
@@ -160,11 +159,11 @@ require (
 	k8s.io/apiserver v0.35.0 // indirect
 	k8s.io/component-base v0.35.4 // indirect
 	k8s.io/controller-manager v0.0.0 // indirect
-	k8s.io/klog/v2 v2.130.1 // indirect
-	k8s.io/kube-openapi v0.0.0-20250910181357-589584f1c912 // indirect
+	k8s.io/klog/v2 v2.140.0 // indirect
+	k8s.io/kube-openapi v0.0.0-20260317180543-43fb72c5454a // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
-	sigs.k8s.io/structured-merge-diff/v6 v6.3.2-0.20260122202528-d9cc6641c482 // indirect
+	sigs.k8s.io/structured-merge-diff/v6 v6.3.2 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
