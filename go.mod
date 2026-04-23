@@ -18,7 +18,7 @@ require (
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af
 	k8s.io/api v0.36.0
 	k8s.io/apimachinery v0.36.0
-	k8s.io/client-go v0.35.4
+	k8s.io/client-go v0.36.0
 	k8s.io/cri-api v0.36.0
 	k8s.io/cri-client v0.35.4
 	k8s.io/kubernetes v1.35.3
@@ -52,7 +52,7 @@ require (
 	github.com/docker/go-events v0.0.0-20250808211157-605354379745 // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
-	github.com/emicklei/go-restful/v3 v3.12.2 // indirect
+	github.com/emicklei/go-restful/v3 v3.13.0 // indirect
 	github.com/evanphx/json-patch/v5 v5.9.11 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
