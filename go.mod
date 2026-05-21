@@ -3,7 +3,7 @@ module ctx.sh/coral
 go 1.26.0
 
 require (
-	connectrpc.com/connect v1.19.2
+	connectrpc.com/connect v1.20.0
 	github.com/containers/image/v5 v5.36.2
 	github.com/distribution/distribution/v3 v3.1.0
 	github.com/go-logr/logr v1.4.3
