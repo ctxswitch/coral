@@ -6,7 +6,7 @@ require (
 	connectrpc.com/connect v1.20.0
 	github.com/containers/image/v5 v5.36.2
 	github.com/distribution/distribution/v3 v3.1.0
-	github.com/go-logr/logr v1.4.3
+	github.com/go-logr/logr v1.4.4
 	github.com/prometheus/client_golang v1.23.2
 	github.com/sirupsen/logrus v1.9.4
 	github.com/spf13/cobra v1.10.2
