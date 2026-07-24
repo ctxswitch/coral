@@ -21,7 +21,7 @@ require (
 	k8s.io/client-go v0.36.3
 	k8s.io/cri-api v0.36.3
 	k8s.io/cri-client v0.36.3
-	k8s.io/kubernetes v1.36.2
+	k8s.io/kubernetes v1.36.3
 	k8s.io/utils v0.0.0-20260210185600-b8788abfbbc2
 	sigs.k8s.io/controller-runtime v0.24.1
 )
